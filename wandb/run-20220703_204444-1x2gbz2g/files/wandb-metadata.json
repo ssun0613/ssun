@@ -1,0 +1,22 @@
+{
+    "os": "Darwin-21.5.0-x86_64-i386-64bit",
+    "python": "3.6.13",
+    "heartbeatAt": "2022-07-03T11:44:47.933618",
+    "startedAt": "2022-07-03T11:44:44.852748",
+    "docker": null,
+    "cpu_count": 8,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "/Users/ssun/Wafer_Defect_Detection/WDM_SSUN/total_train_test.py",
+    "codePath": "WDM_SSUN/total_train_test.py",
+    "git": {
+        "remote": "https://github.com/harimYi/Wafer_Defect_Detection.git",
+        "commit": "b73f14308b89674e0a24d30ffab7cd286b914281"
+    },
+    "email": "103228462+ICS-MISUN@users.noreply.github.com",
+    "root": "/Users/ssun/Wafer_Defect_Detection",
+    "host": "gimmiseon-ui-MacBookAir.local",
+    "username": "ssun",
+    "executable": "/Users/ssun/opt/anaconda3/envs/test/bin/python"
+}
