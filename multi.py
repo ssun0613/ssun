@@ -51,6 +51,10 @@ def setup_network(opt, device):
         from model.efficientnet import efficientnet_gain_b0 as network
         net = network().to(device)
 
+    elif config.opt.network_name == 'capsnet':
+        from model.capsulenet import capsnet as network
+        net = network().to(device)
+
     if not config.opt.continue_train:
         net.init_weights()
     return net
@@ -187,23 +191,23 @@ if __name__ == '__main__':
                 temp_loss = []
                 temp_acc = []
 
-            if global_step % config.opt.freq_show_heatmap == 0:
-                if config.opt.show_cam != None:
-                    if 'GAIN' in config.opt.network_name:
-                        from model.CAM import GradCAM, Gain_GradCAM
-                        GradCAM, input_image_pick, input_attention__pick, input_make_pick, input_label_pick, prediction_pick = Gain_GradCAM(net, input_label)
-                        wb_logger.log_images_to_wandb_multi(input_image_pick, GradCAM, mode='GAIN_GradCAM' + "_" + str(config.opt.dataset_name) + "{}".format(global_step))
-                        print("check wandb\n")
-
-                    else:
-                        from model.CAM import GradCAM
-                        GradCAM, input_image_pick, input_label_pick, prediction_pick = GradCAM(net, input_label)
-                        wb_logger.log_images_to_wandb_multi(input_image_pick, GradCAM, mode='train_GradCAM' + "_" + str(config.opt.dataset_name) + "{}".format(global_step))
-                        print("check wandb\n")
-
-                else:
-                    print("Don't want to show the CAM or GradCAM")
-                net.train()
+            # if global_step % config.opt.freq_show_heatmap == 0:
+            #     if config.opt.show_cam != None:
+            #         if 'GAIN' in config.opt.network_name:
+            #             from model.CAM import GradCAM, Gain_GradCAM
+            #             GradCAM, input_image_pick, input_attention__pick, input_make_pick, input_label_pick, prediction_pick = Gain_GradCAM(net, input_label)
+            #             wb_logger.log_images_to_wandb_multi(input_image_pick, GradCAM, mode='GAIN_GradCAM' + "_" + str(config.opt.dataset_name) + "{}".format(global_step))
+            #             print("check wandb\n")
+            #
+            #         else:
+            #             from model.CAM import GradCAM
+            #             GradCAM, input_image_pick, input_label_pick, prediction_pick = GradCAM(net, input_label)
+            #             wb_logger.log_images_to_wandb_multi(input_image_pick, GradCAM, mode='train_GradCAM' + "_" + str(config.opt.dataset_name) + "{}".format(global_step))
+            #             print("check wandb\n")
+            #
+            #     else:
+            #         print("Don't want to show the CAM or GradCAM")
+            #     net.train()
 
             if global_step % config.opt.freq_save_net == 0:
                 torch.save({'net': net.state_dict()},

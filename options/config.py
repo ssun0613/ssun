@@ -46,8 +46,8 @@ class Config:
     def __init__(self):
         self.parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-        self.parser.add_argument('--network_name', type=str, default='efficientnet') # [ efficientnet | efficientnet_GAIN ]
-        self.parser.add_argument('--weight_name', type=str, default='efficientnet') # [ efficientnet | efficientnet_GAIN ]
+        self.parser.add_argument('--network_name', type=str, default='efficientnet') # [ efficientnet | efficientnet_GAIN | capsnet ]
+        self.parser.add_argument('--weight_name', type=str, default='efficientnet') # [ efficientnet | efficientnet_GAIN | capsnet ]
         self.parser.add_argument('--dataset_name', type=str, default='multi')
         self.parser.add_argument('--show_cam', type=str, default='GradCAM', help='[CAM | GradCAM]')
         self.parser.add_argument('--continue_train', type=bool, default=False)
