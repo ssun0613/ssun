@@ -135,7 +135,7 @@ if __name__ == '__main__':
             optimizer.step()
 
             predict = net.predict()
-            prediction = torch.argmax(predict, dim=2)
+            prediction = torch.argmax(predict, dim=1)
             accuracy = net.accuracy(prediction, input_label)
 
             temp_loss.append(fn_loss.cpu().detach().numpy().item())

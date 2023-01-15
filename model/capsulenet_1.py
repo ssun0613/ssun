@@ -91,7 +91,7 @@ class Decoder(nn.Module):
                                                    nn.Linear(1024, self.input_width * self.input_height * self.input_channel),
                                                    nn.Sigmoid())
 
-    def forward(self, x, data): # x.shape([1, 8, 16])
+    def forward(self, x): # x.shape([1, 8, 16])
         classes = torch.sqrt((x**2).sum(dim=2))# x.shape([1, 16, 1])
         classes = F.softmax(classes, dim=0)
 
@@ -119,19 +119,9 @@ class capsnet(nn.Module):
 
     def forward(self):
         output = self.digit_capsules(self.primary_layer(self.conv_layer(self.input)))
-        reconstructions, masked = self.decoder(output, data)
+        reconstructions, masked = self.decoder(output)
 
         return output, reconstructions, masked
-
-    def forward(self):
-        self.output = self.VGGnet(self.input)
-
-    def predict(self):
-        predict = F.softmax(self.output, dim=1)
-        return predict
-
-    def get_outputs(self):
-        return self.output
 
     def accuracy(self, x, t):
         acc = torch.sum(x == torch.argmax(t, dim=1)) / float(x.shape[0])
