@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
-
+from options.config import Config
 class Conv(nn.Module):
     def __init__(self, in_channels=1, out_channels=256, kernel_size=9):
         super(Conv, self).__init__()
@@ -17,9 +17,9 @@ class Conv(nn.Module):
         return self.cnn(x)
 
 class Primarycaps(nn.Module):
-    def __init__(self, num_capsule=32, in_channels=256, out_channels=8, kernel_size=9):
+    def __init__(self, out_caps=32, in_channels=256, out_channels=8, kernel_size=9):
         super(Primarycaps, self).__init__()
-        self.capsules = nn.ModuleList([nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size, stride=2, padding=0) for _ in range(num_capsule)])
+        self.capsules = nn.ModuleList([nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size, stride=2, padding=0) for _ in range(out_caps)])
 
     def forward(self, x): # x.shape([1, 256, 28, 28])
         out = [capsule(x) for capsule in self.capsules] # len(out)=32
@@ -32,46 +32,6 @@ class Primarycaps(nn.Module):
         squared_norm = (input_tensor ** 2).sum(-1, keepdim=True) # squared_norm.shape([1, 3200, 1])
         output_tensor = squared_norm * input_tensor / ((1.+squared_norm) * torch.sqrt(squared_norm)) # output_tensor.shape([1, 3200, 8])
         return output_tensor
-
-class Digitcaps_ssun(nn.Module):
-    def __init__(self, num_capsules = 16, num_routes=32*10*10, in_channels=16, out_channels=8):
-        super(Digitcaps_ssun, self).__init__()
-
-        self.in_channels = in_channels
-        self.out_channels = out_channels
-        self.num_capsules = num_capsules
-        self.num_routes = num_routes
-
-        self.W = nn.Parameter(torch.randn(1, num_routes, num_capsules, in_channels, out_channels))
-
-    def forward(self, x): # x.shape([1, 3200, 8])
-        batch_size = x.size(0) # batch_size=1
-        x = torch.stack([x]*self.num_capsules, dim=2).unsqueeze(4) # x.shape([1, 3200, 16, 8, 1])
-
-        W = torch.cat([self.W]*batch_size, dim=0) # W.shape([1, 3200, 16, 16, 8])
-        u_hat = torch.matmul(W,x) # u_hat.shape([1, 3200, 16, 16, 1])
-
-        b_ij = Variable(torch.zeros(1, self.num_routes, self.num_capsules, 1)) # b_ij.shape([1, 3200, 16, 1])
-
-        num_iterations=3
-        for iteration in range(num_iterations):
-            c_ij = F.softmax(b_ij, dim=1)
-            c_ij = torch.cat([c_ij]*batch_size, dim=0).unsqueeze(4)
-
-            s_j = (c_ij * u_hat).sum(dim=1, keepdim=True)
-            v_j = self.squash(s_j)
-
-            if iteration < num_iterations - 1:
-                a_ij = torch.matmul(u_hat.transpose(3,4), torch.cat([v_j]*self.num_routes, dim=1))
-                b_ij = b_ij + a_ij.squeeze(4).mean(dim=0, keepdim=True)
-
-        return v_j.squeeze(1) # v_j.squeeze(1).shape([1, 16, 16, 1])
-
-    def squash(self, input_tensor):
-        squared_norm = (input_tensor ** 2).sum(dim=-1, keepdim=True)
-        output_tensor = squared_norm * input_tensor / ((1. + squared_norm) * torch.sqrt(squared_norm))
-        return output_tensor
-
 
 class Digitcaps(nn.Module):
     def __init__(self, in_dim=8, in_caps=32*10*10, out_dim=16, out_caps=8, num_routing=3):
@@ -145,17 +105,20 @@ class Decoder(nn.Module):
         return reconstructions, masked
 
 class capsnet(nn.Module):
-    def __init__(self):
+    def __init__(self, config):
         super(capsnet, self).__init__()
-        self.conv_layer = Conv(in_channels=1, out_channels=256, kernel_size=9)
-        self.primary_layer = Primarycaps(num_capsule=32, in_channels=256, out_channels=8, kernel_size=9)
-        self.digit_capsules = Digitcaps(in_dim=8, in_caps=32*10*10, out_dim=16, out_caps=8, num_routing=3)
-        self.decoder = Decoder(input_width=52, input_height=52, input_channel=1)
+        self.conv_layer = Conv(in_channels=config.opt.data_depth, out_channels=256, kernel_size=9)
+        self.primary_layer = Primarycaps(out_caps=32, in_channels=256, out_channels=8, kernel_size=9)
+        self.digit_capsules = Digitcaps(in_dim=config.opt.in_dim, in_caps=32*10*10, out_dim=config.opt.out_dim, out_caps=8, num_routing=config.opt.num_routing)
+        self.decoder = Decoder(input_width=config.opt.data_height, input_height=config.opt.data_width, input_channel=config.opt.data_depth)
 
         self.mse_loss = nn.MSELoss()
 
-    def forward(self, data):
-        output = self.digit_capsules(self.primary_layer(self.conv_layer(data)))
+    def set_input(self, x):
+        self.input = x
+
+    def forward(self):
+        output = self.digit_capsules(self.primary_layer(self.conv_layer(self.input)))
         reconstructions, masked = self.decoder(output, data)
 
         return output, reconstructions, masked
@@ -183,6 +146,8 @@ class capsnet(nn.Module):
 
 if __name__ == '__main__':
     print('Debug StackedAE')
-    model = capsnet()
+    config=Config()
+    model = capsnet(config)
     x = torch.rand(1, 1, 52, 52)
+    model.set_input(x)
     output, reconstructions, masked = model.forward(x)

@@ -30,10 +30,17 @@ def dataset_info(dataset_name):
     elif dataset_name == 'multi':
         dataset_info['dataset_path_train'] = '/storage/hrlee/WDM/wdmmix_new/train_aug/'
         dataset_info['dataset_path_test'] = '/storage/hrlee/WDM/wdmmix_new/test_aug/'
+        dataset_info['loss_name'] = 'cross'
+
         dataset_info['data_height'] = 224
         dataset_info['data_width'] = 224
+        dataset_info['data_depth'] = 1
         dataset_info['batch_size'] = 20
-        # dataset_info['data_depth'] = 1
+
+        dataset_info['in_dim'] = 8
+        dataset_info['out_dim'] = 16
+        dataset_info['num_routing'] = 3
+
 
     else:
         ValueError('There is no dataset named {}'.format(dataset_name))
@@ -46,8 +53,8 @@ class Config:
     def __init__(self):
         self.parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-        self.parser.add_argument('--network_name', type=str, default='efficientnet') # [ efficientnet | efficientnet_GAIN | capsnet ]
-        self.parser.add_argument('--weight_name', type=str, default='efficientnet') # [ efficientnet | efficientnet_GAIN | capsnet ]
+        self.parser.add_argument('--network_name', type=str, default='capsnet')
+        self.parser.add_argument('--weight_name', type=str, default='capsnet')
         self.parser.add_argument('--dataset_name', type=str, default='multi')
         self.parser.add_argument('--show_cam', type=str, default='GradCAM', help='[CAM | GradCAM]')
         self.parser.add_argument('--continue_train', type=bool, default=False)
@@ -59,9 +66,15 @@ class Config:
         self.parser.add_argument('--batch_size', type=int, default=self.dataset_info['batch_size'])
         self.parser.add_argument('--dataset_path_train', type=str, default=self.dataset_info['dataset_path_train'])
         self.parser.add_argument('--dataset_path_test', type=str, default=self.dataset_info['dataset_path_test'])
-        self.parser.add_argument('--data_height', type=str, default=self.dataset_info['data_height'])
-        self.parser.add_argument('--data_width', type=str, default=self.dataset_info['data_width'])
-        # self.parser.add_argument('--data_depth', type=str, default=self.dataset_info['data_depth'])
+        self.parser.add_argument('--loss_name', type=str, default=self.dataset_info['loss_name'])
+
+        self.parser.add_argument('--data_height', type=int, default=self.dataset_info['data_height'])
+        self.parser.add_argument('--data_width', type=int, default=self.dataset_info['data_width'])
+        self.parser.add_argument('--data_depth', type=int, default=self.dataset_info['data_depth'])
+
+        self.parser.add_argument('--in_dim', type=int, default=self.dataset_info['in_dim'])
+        self.parser.add_argument('--out_dim', type=int, default=self.dataset_info['out_dim'])
+        self.parser.add_argument('--num_routing', type=int, default=self.dataset_info['num_routing'])
         #####
         self.parser.add_argument('--scheduler_name', type=str, default='cosine', help='[stepLR | cycliclr | cosine]')
         self.parser.add_argument('--lr', type=float, default=1e-4)

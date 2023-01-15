@@ -9,12 +9,12 @@ import sys
 sys.path.append("..")
 import numpy as np
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 import time
 from torch.optim import lr_scheduler
 
 from options.config import Config
-from options.draw_chart import draw_chart
 from utils.wandb_utils import WBLogger
 
 def setup_scheduler(opt, optimizer):
@@ -60,51 +60,18 @@ def setup_network(opt, device):
     return net
 
 def calc_loss(opt, net, input_label, input_image=None):
-    if 'GAIN' in opt.network_name:
-        from model.loss import multiloss
-        cl_out = net.get_outputs()
-        am_out = net.get_outputs_2()
+    if config.opt.loss_name == 'mse':
+        fn_loss = nn.MSELoss()
+        loss = fn_loss(output, input_label)
 
-        fn_loss_1 = multiloss(input_label, cl_out)
-
-        exist_label = input_label[:, :, 1]
-        am_out_score = F.softmax(am_out, dim=2)[:, :, 1]
-        loss_cnt = 0
-        fn_loss_2 = 0
-        for b_id in range(exist_label.shape[0]):
-            if len(torch.where(exist_label[b_id])[0]) != 0:
-                loss_cnt += 1
-                fn_loss_2 += am_out_score[b_id, torch.where(exist_label[b_id])].sum()
-            else:
-                loss_cnt += 1
-                fn_loss_2 += am_out_score[b_id].sum()
-        fn_loss_2 = fn_loss_2 / loss_cnt
-
-        if np.isnan(fn_loss_2.cpu().detach().numpy()):
-            print('fn_loss_2 is NaN....')
-        fn_loss = fn_loss_1 + fn_loss_2
-
-    else:
-        from model.loss import multiloss
-        output = net.get_outputs()
-        fn_loss = multiloss(input_label, output)
+    elif config.opt.loss_name == 'cross':
+        fn_loss = nn.CrossEntropyLoss()
+        loss = fn_loss(output, input_label)
 
     return fn_loss
 
 def setup_dataset(opt):
-    if opt.dataset_name in ['wm_811k', 'wm_811k_limited']:
-        from dataset.wm_811k_45000 import WM_811K
-        dataset_object_train = WM_811K(dataset_path=config.opt.dataset_path_train, is_training=True,
-                                       data_size=(config.opt.data_height, config.opt.data_width))
-        train_loader = torch.utils.data.DataLoader(dataset_object_train,
-                                                   batch_size=config.opt.batch_size,
-                                                   shuffle=True, num_workers=0)
-        dataset_object_test = WM_811K(dataset_path=config.opt.dataset_path_test, is_training=True,
-                                      data_size=(config.opt.data_height, config.opt.data_width))
-        test_loader = torch.utils.data.DataLoader(dataset_object_test,
-                                                  batch_size=config.opt.batch_size,
-                                                  shuffle=True, num_workers=0)
-    elif opt.dataset_name in ['multi']:
+    if opt.dataset_name in ['multi']:
         from dataset.single_type_36000_mat import single_mat
         dataset_object_train = single_mat(dataset_path=config.opt.dataset_path_train,
                                           data_size=(config.opt.data_height, config.opt.data_width))
@@ -156,18 +123,11 @@ if __name__ == '__main__':
             input_image = data['image'].type('torch.FloatTensor').to(device)
             input_label = data['label'].type('torch.FloatTensor').to(device)
 
-            label_1 = input_label.unsqueeze(dim=2)
-            label_2 = torch.ones_like(label_1)
 
-            input_label = torch.concat([(label_2 - label_1), label_1], dim=2)
-
-            if 'GAIN' in config.opt.network_name:
-                net.set_input(input_image, input_label)
-
-            else:
-                net.set_input(input_image)
+            net.set_input(input_image)
 
             net.forward()
+
             fn_loss = calc_loss(config.opt, net, input_label)
 
             optimizer.zero_grad()
@@ -190,24 +150,6 @@ if __name__ == '__main__':
 
                 temp_loss = []
                 temp_acc = []
-
-            # if global_step % config.opt.freq_show_heatmap == 0:
-            #     if config.opt.show_cam != None:
-            #         if 'GAIN' in config.opt.network_name:
-            #             from model.CAM import GradCAM, Gain_GradCAM
-            #             GradCAM, input_image_pick, input_attention__pick, input_make_pick, input_label_pick, prediction_pick = Gain_GradCAM(net, input_label)
-            #             wb_logger.log_images_to_wandb_multi(input_image_pick, GradCAM, mode='GAIN_GradCAM' + "_" + str(config.opt.dataset_name) + "{}".format(global_step))
-            #             print("check wandb\n")
-            #
-            #         else:
-            #             from model.CAM import GradCAM
-            #             GradCAM, input_image_pick, input_label_pick, prediction_pick = GradCAM(net, input_label)
-            #             wb_logger.log_images_to_wandb_multi(input_image_pick, GradCAM, mode='train_GradCAM' + "_" + str(config.opt.dataset_name) + "{}".format(global_step))
-            #             print("check wandb\n")
-            #
-            #     else:
-            #         print("Don't want to show the CAM or GradCAM")
-            #     net.train()
 
             if global_step % config.opt.freq_save_net == 0:
                 torch.save({'net': net.state_dict()},

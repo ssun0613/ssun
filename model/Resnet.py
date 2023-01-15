@@ -60,7 +60,9 @@ class Resnet(nn.Module):
                                     shortcut(in_channels = 512, out_channels = 512, kernel_size = (3, 3), stride = 1, padding = 1),
                                     nn.AdaptiveAvgPool2d(1),
                                     nn.Flatten(),
-                                    nn.Linear(in_features=512, out_features=16)
+                                    nn.Linear(in_features=512, out_features=256),
+                                    nn.ReLU(),
+                                    nn.Linear(in_features=256, out_features=8),
                                     )
 
     def set_input(self, x):
