@@ -123,6 +123,20 @@ class capsnet(nn.Module):
 
         return output, reconstructions, masked
 
+    def forward(self):
+        self.output = self.VGGnet(self.input)
+
+    def predict(self):
+        predict = F.softmax(self.output, dim=1)
+        return predict
+
+    def get_outputs(self):
+        return self.output
+
+    def accuracy(self, x, t):
+        acc = torch.sum(x == torch.argmax(t, dim=1)) / float(x.shape[0])
+        return float(acc.cpu().numpy())
+
     def margin_loss(self, x, labels):
         batch_size = x.size(0)
 
