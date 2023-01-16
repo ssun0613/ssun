@@ -32,8 +32,8 @@ def dataset_info(dataset_name):
         dataset_info['dataset_path_test'] = '/storage/hrlee/WDM/wdmmix_new/test_aug/'
         dataset_info['loss_name'] = 'cross'
 
-        dataset_info['data_height'] = 224
-        dataset_info['data_width'] = 224
+        dataset_info['data_height'] = 52
+        dataset_info['data_width'] = 52
         dataset_info['data_depth'] = 1
         dataset_info['batch_size'] = 20
 
@@ -53,8 +53,8 @@ class Config:
     def __init__(self):
         self.parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-        self.parser.add_argument('--network_name', type=str, default='capsnet')
-        self.parser.add_argument('--weight_name', type=str, default='capsnet')
+        self.parser.add_argument('--network_name', type=str, default='capsnet') # [ resnet | densenet | efficientnet | capsnet ]
+        self.parser.add_argument('--weight_name', type=str, default='capsnet') # [ resnet | densenet | efficientnet | capsnet ]
         self.parser.add_argument('--dataset_name', type=str, default='multi')
         self.parser.add_argument('--show_cam', type=str, default='GradCAM', help='[CAM | GradCAM]')
         self.parser.add_argument('--continue_train', type=bool, default=False)

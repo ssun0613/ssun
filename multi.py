@@ -17,61 +17,65 @@ from torch.optim import lr_scheduler
 from options.config import Config
 from utils.wandb_utils import WBLogger
 
-def setup_scheduler(opt, optimizer):
-    if opt.scheduler_name == 'steplr':
+def setup_scheduler(optimizer):
+    if config.opt.scheduler_name == 'steplr':
         scheduler = lr_scheduler.StepLR(optimizer, step_size=5)
-    elif opt.scheduler_name == 'cycliclr':
-        scheduler = lr_scheduler.CyclicLR(optimizer, base_lr=1e-9, max_lr=opt.lr, cycle_momentum=False, step_size_up=3, step_size_down=17, mode='triangular2')
-    elif opt.scheduler_name == 'cosine':
+    elif config.opt.scheduler_name == 'cycliclr':
+        scheduler = lr_scheduler.CyclicLR(optimizer, base_lr=1e-9, max_lr=config.opt.lr, cycle_momentum=False, step_size_up=3, step_size_down=17, mode='triangular2')
+    elif config.opt.scheduler_name == 'cosine':
         scheduler = lr_scheduler.CosineAnnealingLR(optimizer, T_max=10, eta_min=1e-9)
     else:
         scheduler = None
-        NotImplementedError('{} not implemented'.format(opt.scheduler_name))
+        NotImplementedError('{} not implemented'.format(config.opt.scheduler_name))
     return scheduler
 
-def setup_optimizer(opt, net):
-    if opt.optimizer_name == 'Adam':
+def setup_optimizer(net):
+    if config.opt.optimizer_name == 'Adam':
         optim = torch.optim.Adam(net.parameters(), lr=config.opt.lr)
-    elif opt.optimizer_name == 'RMSprop':
+    elif config.opt.optimizer_name == 'RMSprop':
         optim = torch.optim.RMSprop(net.parameters(), lr=config.opt.lr)
     else:
         optim = None
-        NotImplementedError('{} not implemented'.format(opt.optimizer_name))
+        NotImplementedError('{} not implemented'.format(config.opt.optimizer_name))
     return optim
 
-def setup_network(opt, device):
+def setup_network(device):
     if config.opt.network_name == None:
         ValueError('Please set model_name!')
+
+    elif config.opt.network_name == 'resnet':
+        from model.Resnet import Resnet as network
+        net = network().to(device)
+
+    elif config.opt.network_name == 'densenet':
+        from model.DenseNet import DenseNet as network
+        net = network().to(device)
 
     elif config.opt.network_name == 'efficientnet':
         from model.efficientnet import efficientnet_b0 as network
         net = network().to(device)
 
-    elif config.opt.network_name == 'efficientnet_GAIN':
-        from model.efficientnet import efficientnet_gain_b0 as network
-        net = network().to(device)
-
     elif config.opt.network_name == 'capsnet':
-        from model.capsulenet import capsnet as network
+        from model.capsulenet_1 import capsnet as network
         net = network().to(device)
 
     if not config.opt.continue_train:
         net.init_weights()
     return net
 
-def calc_loss(opt, net, input_label, input_image=None):
+def calc_loss(net, input_label):
     if config.opt.loss_name == 'mse':
         fn_loss = nn.MSELoss()
-        loss = fn_loss(output, input_label)
+        loss = fn_loss(net.get_output(), input_label)
 
     elif config.opt.loss_name == 'cross':
         fn_loss = nn.CrossEntropyLoss()
-        loss = fn_loss(output, input_label)
+        loss = fn_loss(net.get_output(), input_label)
 
-    return fn_loss
+    return loss
 
-def setup_dataset(opt):
-    if opt.dataset_name in ['multi']:
+def setup_dataset():
+    if config.opt.dataset_name in ['multi']:
         from dataset.single_type_36000_mat import single_mat
         dataset_object_train = single_mat(dataset_path=config.opt.dataset_path_train,
                                           data_size=(config.opt.data_height, config.opt.data_width))
@@ -85,7 +89,7 @@ def setup_dataset(opt):
                                                   shuffle=True, num_workers=0)
     else:
         train_loader, test_loader = None, None
-        NotImplementedError('Not implemented {}'.format(opt.dataset_name))
+        NotImplementedError('Not implemented {}'.format(config.opt.dataset_name))
     return train_loader, test_loader
 
 def setup_device(opt):
@@ -102,11 +106,11 @@ if __name__ == '__main__':
     device = setup_device(config.opt)
     wb_logger = WBLogger(config.opt)
 
-    train_loader, test_loader = setup_dataset(config.opt)
+    train_loader, test_loader = setup_dataset()
 
-    net = setup_network(config.opt, device)
-    optimizer = setup_optimizer(config.opt, net)
-    scheduler = setup_scheduler(config.opt, optimizer)
+    net = setup_network(device)
+    optimizer = setup_optimizer(net)
+    scheduler = setup_scheduler(optimizer)
 
     global_step = 0
     temp_loss = []
@@ -128,7 +132,7 @@ if __name__ == '__main__':
 
             net.forward()
 
-            fn_loss = calc_loss(config.opt, net, input_label)
+            fn_loss = calc_loss(net, input_label)
 
             optimizer.zero_grad()
             fn_loss.backward()

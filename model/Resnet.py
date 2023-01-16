@@ -71,18 +71,12 @@ class Resnet(nn.Module):
     def forward(self):
         self.output = self.Resnet(self.input)
 
-    def get_outputs(self):
-        class_1 = self.output[:,0:8].unsqueeze(dim=2)
-        class_0 = self.output[:,8:].unsqueeze(dim=2)
-        self.output = torch.concat([class_1,class_0],dim=2)
+
+    def get_output(self):
         return self.output
 
-    def get_output(self, t):
-        self.predict_out = torch.argmax(t, dim=2)
-        return self.predict_out
-
     def predict(self):
-        y = F.softmax(self.output, dim=2)
+        y = F.softmax(self.output, dim=1)
         return y
 
     def accuracy(self, x, t):

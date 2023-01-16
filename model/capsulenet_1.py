@@ -112,7 +112,10 @@ class capsnet(nn.Module):
         self.digit_capsules = Digitcaps(in_dim=config.opt.in_dim, in_caps=32*10*10, out_dim=config.opt.out_dim, out_caps=8, num_routing=config.opt.num_routing)
         self.decoder = Decoder(input_width=config.opt.data_height, input_height=config.opt.data_width, input_channel=config.opt.data_depth)
 
-        self.mse_loss = nn.MSELoss()
+        if config.opt.loss_name == 'mse':
+            self.loss_name = nn.MSELoss()
+        elif config.opt.loss_name == 'cross':
+            self.loss_name = nn.CrossEntropyLoss()
 
     def set_input(self, x):
         self.input = x
@@ -122,6 +125,10 @@ class capsnet(nn.Module):
         reconstructions, masked = self.decoder(output)
 
         return output, reconstructions, masked
+
+    def predict(self):
+        y = F.softmax(self.output, dim=2)
+        return y
 
     def accuracy(self, x, t):
         acc = torch.sum(x == torch.argmax(t, dim=1)) / float(x.shape[0])
@@ -136,16 +143,16 @@ class capsnet(nn.Module):
         right = F.relu(v_c-0.1).view(batch_size, -1)
 
         loss = labels*left + 0.5*(1.0-labels)*right
-        loss=loss.sum(dim=1).mean()
+        loss = loss.sum(dim=1).mean()
 
         return loss
 
     def reconstruction_loss(self, data, reconstructions):
-        loss = self.mse_loss(reconstructions.view(reconstructions.size(0), -1), data.view(reconstructions.size(0), -1))
+        loss = self.loss_name(reconstructions.view(reconstructions.size(0), -1), data.view(reconstructions.size(0), -1))
 
         return loss*0.0005
 
-    def loss(self, data, x, target, reconstructions):
+    def get_loss(self, data, x, target, reconstructions):
         return self.margin_loss(x, target) + self.reconstruction_loss(data, reconstructions)
 
 if __name__ == '__main__':
