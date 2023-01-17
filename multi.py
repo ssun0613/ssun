@@ -17,50 +17,52 @@ from torch.optim import lr_scheduler
 from options.config import Config
 from utils.wandb_utils import WBLogger
 
-def setup_scheduler(optimizer):
-    if config.opt.scheduler_name == 'steplr':
+def setup_scheduler(opt, optimizer):
+    if opt.scheduler_name == 'steplr':
         scheduler = lr_scheduler.StepLR(optimizer, step_size=5)
-    elif config.opt.scheduler_name == 'cycliclr':
-        scheduler = lr_scheduler.CyclicLR(optimizer, base_lr=1e-9, max_lr=config.opt.lr, cycle_momentum=False, step_size_up=3, step_size_down=17, mode='triangular2')
-    elif config.opt.scheduler_name == 'cosine':
+    elif opt.scheduler_name == 'cycliclr':
+        scheduler = lr_scheduler.CyclicLR(optimizer, base_lr=1e-9, max_lr=opt.lr, cycle_momentum=False, step_size_up=3, step_size_down=17, mode='triangular2')
+    elif opt.scheduler_name == 'cosine':
         scheduler = lr_scheduler.CosineAnnealingLR(optimizer, T_max=10, eta_min=1e-9)
     else:
         scheduler = None
-        NotImplementedError('{} not implemented'.format(config.opt.scheduler_name))
+        NotImplementedError('{} not implemented'.format(opt.scheduler_name))
     return scheduler
 
-def setup_optimizer(net):
-    if config.opt.optimizer_name == 'Adam':
+def setup_optimizer(opt, net):
+    if opt.optimizer_name == 'Adam':
         optim = torch.optim.Adam(net.parameters(), lr=config.opt.lr)
-    elif config.opt.optimizer_name == 'RMSprop':
+    elif opt.optimizer_name == 'RMSprop':
         optim = torch.optim.RMSprop(net.parameters(), lr=config.opt.lr)
     else:
         optim = None
-        NotImplementedError('{} not implemented'.format(config.opt.optimizer_name))
+        NotImplementedError('{} not implemented'.format(opt.optimizer_name))
     return optim
 
-def setup_network(device):
-    if config.opt.network_name == None:
+def setup_network(opt, device):
+    if opt.network_name == None:
         ValueError('Please set model_name!')
 
-    elif config.opt.network_name == 'resnet':
+    elif opt.network_name == 'resnet':
         from model.Resnet import Resnet as network
         net = network().to(device)
 
-    elif config.opt.network_name == 'densenet':
+    elif opt.network_name == 'densenet':
         from model.DenseNet import DenseNet as network
         net = network().to(device)
 
-    elif config.opt.network_name == 'efficientnet':
+    elif opt.network_name == 'efficientnet':
         from model.efficientnet import efficientnet_b0 as network
         net = network().to(device)
 
-    elif config.opt.network_name == 'capsnet':
+    elif opt.network_name == 'capsnet':
         from model.capsulenet_1 import capsnet as network
-        net = network().to(device)
+        net = network(opt).to(device)
 
-    if not config.opt.continue_train:
+    if not opt.continue_train:
         net.init_weights()
+    else:
+        net = net.load_networks(net=net, net_type=opt.weight_name, weight_path=opt.save_path + '/pre_tested', device=device)
     return net
 
 def calc_loss(net, input_label):
@@ -74,7 +76,7 @@ def calc_loss(net, input_label):
 
     return loss
 
-def setup_dataset():
+def setup_dataset(opt):
     if config.opt.dataset_name in ['multi']:
         from dataset.single_type_36000_mat import single_mat
         dataset_object_train = single_mat(dataset_path=config.opt.dataset_path_train,
@@ -104,18 +106,20 @@ if __name__ == '__main__':
     config = Config()
     config.print_options()
     device = setup_device(config.opt)
-    wb_logger = WBLogger(config.opt)
+    # wb_logger = WBLogger(config.opt)
 
-    train_loader, test_loader = setup_dataset()
+    train_loader, test_loader = setup_dataset(config.opt)
 
-    net = setup_network(device)
-    optimizer = setup_optimizer(net)
-    scheduler = setup_scheduler(optimizer)
+    net = setup_network(config.opt, device)
+    optimizer = setup_optimizer(config.opt, net)
+    scheduler = setup_scheduler(config.opt, optimizer)
 
     global_step = 0
     temp_loss = []
     temp_acc = []
-    chart_update = np.zeros([9, 9])
+    TP = np.zeros([9, 1])
+    FP = np.zeros([9, 1])
+    FN = np.zeros([9, 1])
     test_iter = iter(test_loader)
 
     for curr_epoch in range(config.opt.epochs):

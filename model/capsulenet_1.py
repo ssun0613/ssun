@@ -1,3 +1,6 @@
+import os
+import sys
+sys.path.append("..")
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -105,16 +108,16 @@ class Decoder(nn.Module):
         return reconstructions, masked
 
 class capsnet(nn.Module):
-    def __init__(self, config):
+    def __init__(self, opt):
         super(capsnet, self).__init__()
-        self.conv_layer = Conv(in_channels=config.opt.data_depth, out_channels=256, kernel_size=9)
+        self.conv_layer = Conv(in_channels=opt.data_depth, out_channels=256, kernel_size=9)
         self.primary_layer = Primarycaps(out_caps=32, in_channels=256, out_channels=8, kernel_size=9)
-        self.digit_capsules = Digitcaps(in_dim=config.opt.in_dim, in_caps=32*10*10, out_dim=config.opt.out_dim, out_caps=8, num_routing=config.opt.num_routing)
-        self.decoder = Decoder(input_width=config.opt.data_height, input_height=config.opt.data_width, input_channel=config.opt.data_depth)
+        self.digit_capsules = Digitcaps(in_dim=opt.in_dim, in_caps=32*10*10, out_dim=opt.out_dim, out_caps=8, num_routing=opt.num_routing)
+        self.decoder = Decoder(input_width=opt.data_height, input_height=opt.data_width, input_channel=opt.data_depth)
 
-        if config.opt.loss_name == 'mse':
+        if opt.loss_name == 'mse':
             self.loss_name = nn.MSELoss()
-        elif config.opt.loss_name == 'cross':
+        elif opt.loss_name == 'cross':
             self.loss_name = nn.CrossEntropyLoss()
 
     def set_input(self, x):
@@ -155,6 +158,39 @@ class capsnet(nn.Module):
     def get_loss(self, data, x, target, reconstructions):
         return self.margin_loss(x, target) + self.reconstruction_loss(data, reconstructions)
 
+    def init_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
+                import scipy.stats as stats
+                stddev = m.stddev if hasattr(m, 'stddev') else 0.1
+                X = stats.truncnorm(-2, 2, scale=stddev)
+                values = torch.as_tensor(X.rvs(m.weight.numel()), dtype=m.weight.dtype)
+                values = values.view(m.weight.size())
+                with torch.no_grad():
+                    m.weight.copy_(values)
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+
+    def load_networks(self, net, net_type, device, weight_path=None):
+        load_filename = 'capsnet_epoch_{}.pth'.format(net_type)
+        if weight_path is None:
+            ValueError('Should set the weight_path, which is the path to the folder including weights')
+        else:
+            load_path = os.path.join(weight_path, load_filename)
+        net = net
+        if isinstance(net, torch.nn.DataParallel):
+            net = net.module
+        print('loading the model from %s' % load_path)
+        state_dict = torch.load(load_path, map_location=str(device))
+        if hasattr(state_dict, '_metadata'):
+            del state_dict._metadata
+            net.load_state_dict(state_dict['net'])
+        else:
+            net.load_state_dict(state_dict['net'])
+        print('load completed...')
+
+        return net
 if __name__ == '__main__':
     print('Debug StackedAE')
     config=Config()

@@ -29,7 +29,6 @@ def draw_chart(label, prediction):
         cnt += 1 # batch_size에 맞게 들어오는지 확인하기 위해 넣어줌 --> 사실상 필요없음
     return chart
 
-
 def draw_chart_update(chart_update):
     map = np.zeros_like(chart_update)
     for k in range(map.shape[0]):
