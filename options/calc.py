@@ -33,6 +33,37 @@ def calc_precision_recall_1(prediction, label, TP, FP, FN):
         prediction_check = torch.where(prediction[batch_size] == 1)[0]
         label_check = torch.where(label[batch_size] == 1)[0]
 
+        if len(label_check) > 0:
+            check = torch.eq(prediction[batch_size], label[batch_size])
+
+            t_p = check[prediction_check]
+            t_l = check[label_check]
+
+            f_p = ~t_p
+            f_l = ~t_l
+
+            TP[prediction_check[t_p]] +=1
+            FP[prediction_check[f_p]] +=1
+            FN[label_check[f_l]] +=1
+
+
+        elif len(label_check)==0:
+
+            if len(prediction_check)==0:
+                TP[8] +=1
+
+            elif len(prediction_check)!=0:
+                FN[8] +=1
+
+    return TP, FP, FN
+
+
+def calc_precision_recall_2(prediction, label, TP, FP, FN):
+    for batch_size in range(prediction.shape[0]):
+
+        prediction_check = torch.where(prediction[batch_size] == 1)[0]
+        label_check = torch.where(label[batch_size] == 1)[0]
+
         t_l=[]
         t_p=[]
 
@@ -57,7 +88,6 @@ def calc_precision_recall_1(prediction, label, TP, FP, FN):
             FP[prediction_check[f_p]] +=1
             FN[label_check[f_l]] +=1
 
-
         elif len(label_check) == 0:
 
             if len(prediction_check) == 0:
@@ -67,6 +97,7 @@ def calc_precision_recall_1(prediction, label, TP, FP, FN):
                 FN[8] += 1
 
     return TP, FP, FN
+
 
 if __name__ == '__main__':
     TP = np.zeros([9, 1])
