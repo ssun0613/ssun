@@ -62,8 +62,10 @@ class Trans_layer(nn.Module):
         return self.Trans_layer(x)
 
 class DenseNet(nn.Module):
-    def __init__(self):
+    def __init__(self, opt):
         super(DenseNet, self).__init__()
+
+        self.threshold = opt.threshold
         self.k = 12
         self.CNN = nn.Sequential(nn.Conv2d(in_channels = 3, out_channels = 2 * self.k, kernel_size = (3, 3), stride = 1),
                                  nn.BatchNorm2d(2 * self.k),
@@ -79,7 +81,7 @@ class DenseNet(nn.Module):
                                  )
         self.GAP = nn.AdaptiveAvgPool2d(1)
         self.flatten = nn.Flatten()
-        self.classification = nn.Linear(self.k + 24 * self.k , 16)
+        self.classification = nn.Linear(self.k + 24 * self.k , 8)
 
         if 'GradCAM' in Config().opt.show_cam:
             self.hookF = [Hook(layers[1], backward=False) for layers in list(self._modules.items())]
@@ -95,49 +97,10 @@ class DenseNet(nn.Module):
         GAP = self.GAP(CNN)
         self.output = self.classification(self.flatten(GAP))
 
-    def get_outputs(self):
-        class_1 = self.output[:,0:8].unsqueeze(dim=2)
-        class_0 = self.output[:,8:].unsqueeze(dim=2)
-        self.output = torch.concat([class_1,class_0],dim=2)
-        return self.output
-
-    def get_output(self, t):
-        self.predict_out = torch.argmax(t, dim=2)
-        return self.predict_out
-
     def predict(self):
-        y = F.softmax(self.output, dim=2)
+        y = torch.sqrt((self.output ** 2).sum(dim=2, keepdim=True))
+        y[y > self.threshold] = 1
         return y
-
-    def accuracy(self, x, t):
-        import numpy as np
-
-        y = torch.argmax(t, dim=2)
-        all_defect_idx = np.array(range(x.shape[1]))
-
-        pos_collect = 0
-        neg_collect = 0
-        pos_all = 0
-        neg_all = 0
-        for batch_idx in range(x.shape[0]):
-            temp_x = x[batch_idx].cpu().detach().numpy()
-            temp_y = y[batch_idx].cpu().detach().numpy()
-            defect_idx = np.where(temp_y == 1)[0]
-            no_defect_idx = []
-            for i in range(x.shape[1]):
-                if np.sum(defect_idx == all_defect_idx[i]) == 0:
-                    no_defect_idx.append(all_defect_idx[i])
-            no_defect_idx = np.array(no_defect_idx)
-
-            pos_collect += np.sum(temp_y[defect_idx] == temp_x[defect_idx])
-            neg_collect += np.sum(temp_y[no_defect_idx] == temp_x[no_defect_idx])
-            pos_all += len(temp_y[defect_idx])
-            neg_all += len(temp_y[no_defect_idx])
-
-        pos_acc = pos_collect / float(pos_all)
-        neg_acc = neg_collect / float(neg_all)
-
-        return pos_acc
 
     def init_weights(self):
         for m in self.modules():

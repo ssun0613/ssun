@@ -40,6 +40,7 @@ def dataset_info(dataset_name):
         dataset_info['in_dim'] = 8
         dataset_info['out_dim'] = 16
         dataset_info['num_routing'] = 3
+        dataset_info['threshold'] = 0.5
 
 
     else:
@@ -75,6 +76,7 @@ class Config:
         self.parser.add_argument('--in_dim', type=int, default=self.dataset_info['in_dim'])
         self.parser.add_argument('--out_dim', type=int, default=self.dataset_info['out_dim'])
         self.parser.add_argument('--num_routing', type=int, default=self.dataset_info['num_routing'])
+        self.parser.add_argument('--threshold', type=float, default=self.dataset_info['threshold'])
         #####
         self.parser.add_argument('--scheduler_name', type=str, default='cosine', help='[stepLR | cycliclr | cosine]')
         self.parser.add_argument('--lr', type=float, default=1e-4)

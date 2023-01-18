@@ -45,15 +45,15 @@ def setup_network(opt, device):
 
     elif opt.network_name == 'resnet':
         from model.Resnet import Resnet as network
-        net = network().to(device)
+        net = network(opt).to(device)
 
     elif opt.network_name == 'densenet':
         from model.DenseNet import DenseNet as network
-        net = network().to(device)
+        net = network(opt).to(device)
 
     elif opt.network_name == 'efficientnet':
         from model.efficientnet import efficientnet_b0 as network
-        net = network().to(device)
+        net = network(opt).to(device)
 
     elif opt.network_name == 'capsnet':
         from model.capsulenet_1 import capsnet as network
@@ -106,7 +106,7 @@ if __name__ == '__main__':
     config = Config()
     config.print_options()
     device = setup_device(config.opt)
-    # wb_logger = WBLogger(config.opt)
+    wb_logger = WBLogger(config.opt)
 
     train_loader, test_loader = setup_dataset(config.opt)
 
@@ -143,11 +143,8 @@ if __name__ == '__main__':
             optimizer.step()
 
             predict = net.predict()
-            prediction = torch.argmax(predict, dim=1)
-            accuracy = net.accuracy(prediction, input_label)
 
             temp_loss.append(fn_loss.cpu().detach().numpy().item())
-            temp_acc.append(accuracy)
 
             if global_step % config.opt.freq_show_loss == 0:
                 loss_dict = dict()

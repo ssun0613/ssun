@@ -36,8 +36,9 @@ class shortcut(nn.Module):
         return out + self.projection(x)
 
 class Resnet(nn.Module):
-    def __init__(self):
+    def __init__(self, opt):
         super(Resnet, self).__init__()
+        self.threshold = opt.threshold
         self.Resnet = nn.Sequential(nn.Conv2d(in_channels = 3, out_channels = 64, stride = (1, 1), kernel_size = (3, 3)),
                                     nn.BatchNorm2d(64),
                                     nn.ReLU(),
@@ -71,43 +72,13 @@ class Resnet(nn.Module):
     def forward(self):
         self.output = self.Resnet(self.input)
 
-
     def get_output(self):
         return self.output
 
     def predict(self):
-        y = F.softmax(self.output, dim=1)
+        y = torch.sigmoid(self.output)
+        y[y > self.threshold] = 1
         return y
-
-    def accuracy(self, x, t):
-        import numpy as np
-
-        y = torch.argmax(t, dim=2)
-        all_defect_idx = np.array(range(x.shape[1]))
-
-        pos_collect = 0
-        neg_collect = 0
-        pos_all = 0
-        neg_all = 0
-        for batch_idx in range(x.shape[0]):
-            temp_x = x[batch_idx].cpu().detach().numpy()
-            temp_y = y[batch_idx].cpu().detach().numpy()
-            defect_idx = np.where(temp_y == 1)[0]
-            no_defect_idx = []
-            for i in range(x.shape[1]):
-                if np.sum(defect_idx == all_defect_idx[i]) == 0:
-                    no_defect_idx.append(all_defect_idx[i])
-            no_defect_idx = np.array(no_defect_idx)
-
-            pos_collect += np.sum(temp_y[defect_idx] == temp_x[defect_idx])
-            neg_collect += np.sum(temp_y[no_defect_idx] == temp_x[no_defect_idx])
-            pos_all += len(temp_y[defect_idx])
-            neg_all += len(temp_y[no_defect_idx])
-
-        pos_acc = pos_collect / float(pos_all)
-        neg_acc = neg_collect / float(neg_all)
-
-        return pos_acc
 
     def init_weights(self):
         for m in self.modules():

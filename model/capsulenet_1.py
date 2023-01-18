@@ -6,6 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 from options.config import Config
+
 class Conv(nn.Module):
     def __init__(self, in_channels=1, out_channels=256, kernel_size=9):
         super(Conv, self).__init__()
@@ -110,6 +111,7 @@ class Decoder(nn.Module):
 class capsnet(nn.Module):
     def __init__(self, opt):
         super(capsnet, self).__init__()
+        self.threshold = opt.threshold
         self.conv_layer = Conv(in_channels=opt.data_depth, out_channels=256, kernel_size=9)
         self.primary_layer = Primarycaps(out_caps=32, in_channels=256, out_channels=8, kernel_size=9)
         self.digit_capsules = Digitcaps(in_dim=opt.in_dim, in_caps=32*10*10, out_dim=opt.out_dim, out_caps=8, num_routing=opt.num_routing)
@@ -124,18 +126,16 @@ class capsnet(nn.Module):
         self.input = x
 
     def forward(self):
-        output = self.digit_capsules(self.primary_layer(self.conv_layer(self.input)))
-        reconstructions, masked = self.decoder(output)
+        self.output = self.digit_capsules(self.primary_layer(self.conv_layer(self.input)))
+        reconstructions, masked = self.decoder(self.output)
 
-        return output, reconstructions, masked
+        return self.output, reconstructions, masked
 
     def predict(self):
-        y = F.softmax(self.output, dim=2)
+        y = torch.sqrt((self.output ** 2).sum(dim=2, keepdim=True))
+        y[y > self.threshold] = 1
         return y
 
-    def accuracy(self, x, t):
-        acc = torch.sum(x == torch.argmax(t, dim=1)) / float(x.shape[0])
-        return float(acc.cpu().numpy())
 
     def margin_loss(self, x, labels):
         batch_size = x.size(0)
@@ -155,8 +155,8 @@ class capsnet(nn.Module):
 
         return loss*0.0005
 
-    def get_loss(self, data, x, target, reconstructions):
-        return self.margin_loss(x, target) + self.reconstruction_loss(data, reconstructions)
+    def get_loss(self, label, reconstructions):
+        return self.margin_loss(self.output, label) + self.reconstruction_loss(self.input, reconstructions)
 
     def init_weights(self):
         for m in self.modules():

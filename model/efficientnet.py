@@ -127,14 +127,15 @@ class SepConv(nn.Module):
         return x
 
 class EfficientNet(nn.Module):
-    def __init__(self, num_classes=16, width_coef=1., depth_coef=1., scale=1., dropout=0.2, se_scale=4, stochastic_depth=False, p=0.5):
+    def __init__(self, opt):
         super().__init__()
         channels = [32, 16, 24, 40, 80, 112, 192, 320, 1280]
         repeats = [1, 2, 2, 3, 3, 4, 1]
         strides = [1, 2, 2, 2, 1, 2, 1]
         kernel_size = [3, 3, 5, 3, 5, 5, 3]
-        depth = depth_coef
-        width = width_coef
+        se_scale = 4
+        stochastic_depth = False
+        p = 0.5
 
         if stochastic_depth:
             self.p = p
@@ -143,6 +144,7 @@ class EfficientNet(nn.Module):
             self.p = 1
             self.step = 0
 
+        self.threshold = opt.threshold
         self.CNN = nn.Sequential(
                                     nn.Conv2d(3, channels[0], 3, stride=2, padding=1, bias=False),
                                     nn.BatchNorm2d(channels[0]),
@@ -159,7 +161,7 @@ class EfficientNet(nn.Module):
 
         self.GAP = nn.AdaptiveAvgPool2d(1)
         self.flatten = nn.Flatten()
-        self.classification = nn.Linear(channels[8], num_classes)
+        self.classification = nn.Linear(channels[8], 8)
 
         if 'GradCAM' in Config().opt.show_cam:
             self.hookF = [Hook(layers[1], backward=False) for layers in list(self._modules.items())]
@@ -186,49 +188,11 @@ class EfficientNet(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def get_outputs(self):
-        class_1 = self.output[:,0:8].unsqueeze(dim=2)
-        class_0 = self.output[:,8:].unsqueeze(dim=2)
-        self.output = torch.concat([class_1,class_0],dim=2)
-        return self.output
-
-    def get_output(self, t):
-        self.predict_out = torch.argmax(t, dim=2)
-        return self.predict_out
 
     def predict(self):
-        y = F.softmax(self.output, dim=2)
+        y = torch.sqrt((self.output ** 2).sum(dim=2, keepdim=True))
+        y[y > self.threshold] = 1
         return y
-
-    def accuracy(self, x, t):
-        import numpy as np
-
-        y = torch.argmax(t, dim=2)
-        all_defect_idx = np.array(range(x.shape[1]))
-
-        pos_collect = 0
-        neg_collect = 0
-        pos_all = 0
-        neg_all = 0
-        for batch_idx in range(x.shape[0]):
-            temp_x = x[batch_idx].cpu().detach().numpy()
-            temp_y = y[batch_idx].cpu().detach().numpy()
-            defect_idx = np.where(temp_y == 1)[0]
-            no_defect_idx = []
-            for i in range(x.shape[1]):
-                if np.sum(defect_idx == all_defect_idx[i]) == 0:
-                    no_defect_idx.append(all_defect_idx[i])
-            no_defect_idx = np.array(no_defect_idx)
-
-            pos_collect += np.sum(temp_y[defect_idx] == temp_x[defect_idx])
-            neg_collect += np.sum(temp_y[no_defect_idx] == temp_x[no_defect_idx])
-            pos_all += len(temp_y[defect_idx])
-            neg_all += len(temp_y[no_defect_idx])
-
-        pos_acc = pos_collect / float(pos_all)
-        neg_acc = neg_collect / float(neg_all)
-
-        return pos_acc
 
     def init_weights(self):
         for m in self.modules():
