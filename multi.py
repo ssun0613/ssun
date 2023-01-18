@@ -116,7 +116,8 @@ if __name__ == '__main__':
 
     global_step = 0
     temp_loss = []
-    temp_acc = []
+    temp_precision = []
+    temp_recall = []
     TP = np.zeros([9, 1])
     FP = np.zeros([9, 1])
     FN = np.zeros([9, 1])
@@ -144,15 +145,22 @@ if __name__ == '__main__':
             predict = net.predict()
 
             TP, FP, FN = calc_precision_recall_1(predict.cpu(), input_label.cpu(), TP, FP, FN)
+            precision, recall = precision_recall(TP, FP, FN)
+
+            temp_precision.append(precision)
+            temp_recall.append(recall)
 
             temp_loss.append(fn_loss.cpu().detach().numpy().item())
+
+            if global_step % 50 == 0:
+                wb_logger.log_precision_recall_curve(temp_precision, temp_recall, 'train')
 
             if global_step % config.opt.freq_show_loss == 0:
                 loss_dict = dict()
                 loss_dict['epoch'] = curr_epoch
                 loss_dict['loss'] = np.mean(temp_loss)
                 wb_logger.log(prefix='train', metrics_dict=loss_dict)
-                precision, recall = precision_recall(TP, FP, FN)
+                # precision, recall = precision_recall(TP, FP, FN)
                 wb_logger.log_precision_recall(recall, precision, 'train')
 
                 temp_loss = []
@@ -161,9 +169,9 @@ if __name__ == '__main__':
                 FP = np.zeros([9, 1])
                 FN = np.zeros([9, 1])
 
-            if global_step % config.opt.freq_save_net == 0:
-                torch.save({'net': net.state_dict()},
-                           config.opt.save_path + '/{}_epoch'.format(config.opt.network_name) + ".pth")
+            # if global_step % config.opt.freq_save_net == 0:
+            #     torch.save({'net': net.state_dict()},
+            #                config.opt.save_path + '/{}_epoch'.format(config.opt.network_name) + ".pth")
 
         print('Elapsed time for one epoch: %.2f [s]' % (time.time() - epoch_start_time))
         print('------- epoch {} ends -------'.format(curr_epoch + 1))

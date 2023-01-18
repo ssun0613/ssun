@@ -88,7 +88,7 @@ class Config:
         self.parser.add_argument('--save_path', type=str, default='./checkpoints/pre_test_{}_{}'.format(temp_parser.dataset_name, temp_parser.network_name), help='path to store model')
         self.parser.add_argument('--train_test_save_path', type=str, default='./train_test/' + temp_parser.network_name, help='')
         self.parser.add_argument('--use_cuda', type=bool, default=True, help='use cuda')
-        self.parser.add_argument('--gpu_id', type=str, default='0', help='gpu id used to train')
+        self.parser.add_argument('--gpu_id', type=str, default='1', help='gpu id used to train')
         self.parser.add_argument('--phase', type=str, default='train')
         self.parser.add_argument('--freq_show_loss', type=int, default=100)
         self.parser.add_argument('--freq_show_heatmap', type=int, default=500)
