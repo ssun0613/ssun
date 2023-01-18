@@ -131,7 +131,6 @@ if __name__ == '__main__':
             input_image = data['image'].type('torch.FloatTensor').to(device)
             input_label = data['label'].type('torch.FloatTensor').to(device)
 
-
             net.set_input(input_image)
 
             net.forward()
