@@ -15,6 +15,7 @@ import time
 from torch.optim import lr_scheduler
 
 from options.config import Config
+from options.precision_recall import calc_precision_recall_1, precision_recall
 from utils.wandb_utils import WBLogger
 
 def setup_scheduler(opt, optimizer):
@@ -101,7 +102,6 @@ def setup_device(opt):
         device = torch.device("cpu")
     return device
 
-
 if __name__ == '__main__':
     config = Config()
     config.print_options()
@@ -131,7 +131,6 @@ if __name__ == '__main__':
             input_image = data['image'].type('torch.FloatTensor').to(device)
             input_label = data['label'].type('torch.FloatTensor').to(device)
 
-
             net.set_input(input_image)
 
             net.forward()
@@ -144,17 +143,23 @@ if __name__ == '__main__':
 
             predict = net.predict()
 
+            TP, FP, FN = calc_precision_recall_1(predict, input_label, TP, FP, FN)
+
             temp_loss.append(fn_loss.cpu().detach().numpy().item())
 
             if global_step % config.opt.freq_show_loss == 0:
                 loss_dict = dict()
                 loss_dict['epoch'] = curr_epoch
                 loss_dict['loss'] = np.mean(temp_loss)
-                loss_dict['acc'] = np.mean(temp_acc)
                 wb_logger.log(prefix='train', metrics_dict=loss_dict)
+                precision, recall = precision_recall(TP, FP, FN)
+                wb_logger.log_precision_recall(recall, precision, 'train')
 
                 temp_loss = []
                 temp_acc = []
+                TP = np.zeros([9, 1])
+                FP = np.zeros([9, 1])
+                FN = np.zeros([9, 1])
 
             if global_step % config.opt.freq_save_net == 0:
                 torch.save({'net': net.state_dict()},

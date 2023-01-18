@@ -30,7 +30,7 @@ def dataset_info(dataset_name):
     elif dataset_name == 'multi':
         dataset_info['dataset_path_train'] = '/storage/hrlee/WDM/wdmmix_new/train_aug/'
         dataset_info['dataset_path_test'] = '/storage/hrlee/WDM/wdmmix_new/test_aug/'
-        dataset_info['loss_name'] = 'cross'
+        dataset_info['loss_name'] = 'mse'
 
         dataset_info['data_height'] = 52
         dataset_info['data_width'] = 52
@@ -90,7 +90,7 @@ class Config:
         self.parser.add_argument('--use_cuda', type=bool, default=True, help='use cuda')
         self.parser.add_argument('--gpu_id', type=str, default='1', help='gpu id used to train')
         self.parser.add_argument('--phase', type=str, default='train')
-        self.parser.add_argument('--freq_show_loss', type=int, default=50)
+        self.parser.add_argument('--freq_show_loss', type=int, default=100)
         self.parser.add_argument('--freq_show_heatmap', type=int, default=500)
         self.parser.add_argument('--freq_show_img', type=int, default=50)
         self.parser.add_argument('--freq_save_net', type=int, default=50)

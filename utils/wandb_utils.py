@@ -89,3 +89,24 @@ class WBLogger:
             data.append(data_new)
         outputs_table = wandb.Table(data=data, columns=column_names)
         wandb.log({logging_title: outputs_table})
+
+    @staticmethod
+    def log_precision_recall(recall, precision, mode):
+        logging_title = 'recall_precision_' + mode
+        pattern = np.expand_dims(np.array(['C', 'D', 'EL', 'ER', 'L', 'NF', 'R', 'S', 'N', 'C', 'D', 'EL', 'ER', 'L', 'NF', 'R', 'S', 'N']), axis=1)
+        rp = np.expand_dims(
+            np.array(['Recall', 'Recall', 'Recall', 'Recall', 'Recall', 'Recall', 'Recall', 'Recall', 'Recall',
+                      'Precision', 'Precision', 'Precision', 'Precision', 'Precision', 'Precision', 'Precision', 'Precision', 'Precision']),
+            axis=1)
+        value = np.concatenate([recall, precision], axis=0)
+        data = pd.DataFrame(np.concatenate([pattern, rp, value], axis=1).T, index=['pattern', 'rp', 'value']).T
+        data['value'] = data['value'].astype('float')
+        #
+        # Clear the previous confusion map
+        plt.clf()
+        # Create heatmap
+        plot = sns.barplot(data=data, x='pattern', y='value', hue='rp')
+        # Upload the seaborn based heatmap image
+        wandb.log({logging_title: [wandb.Image(plot.get_figure())]})
+        # close plot created due to the upper sns.heatmap line.
+        plt.close()

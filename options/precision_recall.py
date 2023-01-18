@@ -65,6 +65,29 @@ def calc_precision_recall_1(prediction, label, TP, FP, FN):
 
     return TP, FP, FN
 
+def precision_recall(TP, FP, FN):
+    recall = np.zeros([9, 1])
+    precision = np.zeros([9, 1])
+    #              TP
+    # Recall = ---------
+    #           TP + FN
+    for i in range(recall.shape[0]):
+        if (TP[i] + FN[i]) != 0:
+            temp = TP[i] / (TP[i] + FN[i])
+        else:
+            temp = 0
+        recall[i] = temp
+    #                TP
+    # Precision = ---------
+    #              TP + FP
+    for i in range(precision.shape[0]):
+        if (TP[i] + FP[i]) != 0:
+            temp = TP[i] / (TP[i] + FP[i])
+        else:
+            temp = 0
+        precision[i] = temp
+    return precision, recall
+
 if __name__ == '__main__':
     TP = np.zeros([9, 1])
     FP = np.zeros([9, 1])
@@ -81,6 +104,6 @@ if __name__ == '__main__':
 
     # TP_1, FP_1, FN_1 = calc_precision_recall(prediction, label, TP, FP, FN)
     TP_2, FP_2, FN_2 = calc_precision_recall_1(prediction, label, TP, FP, FN)
+    precision, recall = precision_recall(TP_2, FP_2, FN_2)
 
-    print(TP_1, FP_1, FN_1)
     print(TP_2, FP_2, FN_2)
