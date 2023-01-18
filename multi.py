@@ -143,7 +143,7 @@ if __name__ == '__main__':
 
             predict = net.predict()
 
-            TP, FP, FN = calc_precision_recall_1(predict, input_label, TP, FP, FN)
+            TP, FP, FN = calc_precision_recall_1(predict.cpu(), input_label.cpu(), TP, FP, FN)
 
             temp_loss.append(fn_loss.cpu().detach().numpy().item())
 
