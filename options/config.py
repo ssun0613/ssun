@@ -35,7 +35,7 @@ def dataset_info(dataset_name):
         dataset_info['data_height'] = 52
         dataset_info['data_width'] = 52
         dataset_info['data_depth'] = 3
-        dataset_info['batch_size'] = 20
+        dataset_info['batch_size'] = 40
 
         dataset_info['in_dim'] = 8
         dataset_info['out_dim'] = 16

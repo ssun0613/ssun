@@ -176,7 +176,8 @@ if __name__ == '__main__':
             #     torch.save({'net': net.state_dict()},
             #                config.opt.save_path + '/{}_epoch'.format(config.opt.network_name) + ".pth")
 
-        draw_p_r_curve(temp_precision, temp_recall)
+        np.savez('./p_r_data/p_r_data_{}_{}.npz'.format(config.opt.network_name, config.opt.loss_name), x=temp_precision, y=temp_recall)
+        draw_p_r_curve(temp_precision, temp_recall, config)
 
         TP = np.zeros([9, 1])
         FP = np.zeros([9, 1])

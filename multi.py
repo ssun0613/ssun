@@ -16,7 +16,6 @@ from torch.optim import lr_scheduler
 
 from options.config import Config
 from options.precision_recall import calc_precision_recall_1, precision_recall
-from options.draw_chart import draw_p_r_curve
 from utils.wandb_utils import WBLogger
 
 def setup_scheduler(opt, optimizer):
@@ -171,6 +170,10 @@ if __name__ == '__main__':
             if global_step % config.opt.freq_save_net == 0:
                 torch.save({'net': net.state_dict()},
                            config.opt.save_path + '/{}_epoch'.format(config.opt.network_name) + ".pth")
+
+        if curr_epoch % 20 == 0:
+            np.savez('./p_r_data/p_r_data_{}_{}_{}_{}.npz'.format(config.opt.network_name, config.opt.loss_name, config.opt.threshold, curr_epoch+1), x=temp_precision, y=temp_recall)
+            print('p_r_data_{}_{}_{}_{}.npz'.format(config.opt.network_name, config.opt.loss_name, config.opt.threshold, curr_epoch+1))
 
         print('Elapsed time for one epoch: %.2f [s]' % (time.time() - epoch_start_time))
         print('------- epoch {} ends -------'.format(curr_epoch + 1))

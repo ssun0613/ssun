@@ -111,16 +111,3 @@ class WBLogger:
         wandb.log({logging_title: [wandb.Image(plot.get_figure())]})
         # close plot created due to the upper sns.heatmap line.
         plt.close()
-
-    @staticmethod
-    def log_precision_recall_curve(temp_precision, temp_recall, mode):
-        logging_title = 'recall_precision_' + mode
-
-
-        # plt.clf()
-        #
-        # plot = sns.barplot(data=data, x='pattern', y='value', hue='rp')
-        #
-        # wandb.log({logging_title: [wandb.Image(plot.get_figure())]})
-        #
-        # plt.close()
