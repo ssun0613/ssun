@@ -7,20 +7,6 @@ from torch.nn import init
 import torch.nn.functional as F
 from options.config import Config
 
-class Hook():
-    def __init__(self, module, backward):
-        if backward == False:
-            self.hook = module.register_forward_hook(self.hook_fn)
-        else:
-            self.hook = module.register_full_backward_hook(self.hook_fn)
-
-    def hook_fn(self, module, input, output):
-        self.input = input
-        self.output = output
-
-    def closs(self):
-        self.hook.remove()
-
 class DenseBottleneck(nn.Module):
     def __init__(self, in_channels, out_channels):
         super(DenseBottleneck, self).__init__()
@@ -83,12 +69,6 @@ class DenseNet(nn.Module):
         self.flatten = nn.Flatten()
         self.classification = nn.Linear(self.k + 24 * self.k , 8)
 
-        if 'GradCAM' in Config().opt.show_cam:
-            self.hookF = [Hook(layers[1], backward=False) for layers in list(self._modules.items())]
-            self.hookB = [Hook(layers[1], backward=True) for layers in list(self._modules.items())]
-        else:
-            self.hookF = [Hook(layers[1], backward=False) for layers in list(self._modules.items())]
-
     def set_input(self, x):
         self.input = x
 
@@ -97,8 +77,11 @@ class DenseNet(nn.Module):
         GAP = self.GAP(CNN)
         self.output = self.classification(self.flatten(GAP))
 
+    def get_output(self):
+        return self.output
+
     def predict(self):
-        y = torch.sqrt((self.output ** 2).sum(dim=2, keepdim=True))
+        y = torch.sigmoid(self.output)
         y[y > self.threshold] = 1
         return y
 

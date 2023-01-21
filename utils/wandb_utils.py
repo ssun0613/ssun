@@ -11,7 +11,7 @@ from utils import common
 class WBLogger:
     def __init__(self, opts):
         self.batch_size = opts.batch_size
-        wandb.init(project=opts.network_name, config=vars(opts))
+        wandb.init(project=opts.dataset_name, config=vars(opts))
 
     @staticmethod
     def log(prefix, metrics_dict):
