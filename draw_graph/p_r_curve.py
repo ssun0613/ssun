@@ -14,7 +14,7 @@ if __name__ =='__main__':
 
     classes = ["Center", "Donut", "Edge_Loc", "Edge_Ring", "Local", "Near_full", "Random", "Scratch", "Normal" ]
     network = "capsnet"  # ['resnet', 'densenet', 'efficientnet', 'capsnet']
-    in_dim = 8 # [8, 16]
+    in_dim = 16 # [8, 16]
     out_channels = 256 # [256, 512, 1024]
 
     # loss_mse = np.load('../p_r_data/p_r_data_{}/p_r_data_{}_mse.npz'.format(network, network))
