@@ -69,6 +69,48 @@ def calc_precision_recall_1(prediction, label, TP, FP, FN):
 
     return TP, FP, FN
 
+def calc_precision_recall_2(prediction, label, TP, FP, FN):
+
+
+
+    for batch_size in range(prediction.shape[0]):
+        prediction_check = torch.where(prediction[batch_size] == 1)[0]
+        label_check = torch.where(label[batch_size] == 1)[0]
+
+        if len(prediction_check)!=0 and len(label_check)!=0:
+            t = []
+            t.append(prediction[batch_size])
+            t.append(label[batch_size])
+            t = torch.stack(t, dim=0)
+            t = torch.sum(t, dim=0)
+
+            TP_idx = torch.where(t == 2)[0]
+            TP[TP_idx] += 1
+
+            idx = torch.where(t == 1)[0]
+            for i in range(len(idx)):
+                for j in range(len(prediction_check)):
+                    if idx[i]==prediction_check[j]:
+                        FP[prediction_check[j]]+=1
+                for k in range(len(label_check)):
+                    if idx[i]==label_check[k]:
+                        FN[label_check[k]]+=1
+
+        elif len(prediction_check) == 0 and len(label_check) == 0:
+            TP[8] += 1
+
+        elif len(prediction_check) == 0 and len(label_check) != 0:
+            FN[label_check] += 1
+            FP[8] += 1
+
+        elif len(prediction_check) != 0 and len(label_check) == 0:
+            FP[prediction_check] += 1
+            FN[8] += 1
+
+
+    return TP, FP, FN
+
+
 def precision_recall(TP, FP, FN):
     recall = np.zeros([9, 1])
     precision = np.zeros([9, 1])
@@ -98,10 +140,10 @@ if __name__ == '__main__':
     FN = np.zeros([9, 1])
 
 
-    prediction = torch.tensor([[0, 0, 1, 0, 0, 1, 0, 0], [0, 1, 1, 0, 0, 1, 0, 0]])
-    label = torch.tensor([[0, 1, 1, 0, 0, 0, 0, 1], [0, 0, 0, 1, 0, 0, 0, 0]])
+    prediction = torch.tensor([[0, 0, 1, 0, 0, 1, 0, 0], [0, 1, 1, 0, 0, 1, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 1, 1, 0, 0, 0, 0, 1]])
+    label = torch.tensor([[0, 1, 1, 0, 0, 0, 0, 1], [0, 0, 0, 1, 0, 0, 0, 0], [0, 1, 1, 0, 0, 1, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]])
 
-    TP_2, FP_2, FN_2 = calc_precision_recall_1(prediction, label, TP, FP, FN)
+    TP_2, FP_2, FN_2 = calc_precision_recall_1(prediction, label)
     precision, recall = precision_recall(TP_2, FP_2, FN_2)
 
     print(TP_2, FP_2, FN_2)

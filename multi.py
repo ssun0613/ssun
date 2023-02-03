@@ -44,6 +44,10 @@ def setup_network(opt, device):
     if opt.network_name == None:
         ValueError('Please set model_name!')
 
+    elif opt.network_name == 'lenet':
+        from model.lenet import LeNet as network
+        net = network(opt).to(device)
+
     elif opt.network_name == 'resnet':
         from model.Resnet import Resnet as network
         net = network(opt).to(device)
@@ -53,7 +57,7 @@ def setup_network(opt, device):
         net = network(opt).to(device)
 
     elif opt.network_name == 'efficientnet':
-        from model.efficientnet import efficientnet_b0 as network
+        from model.efficientnet import EfficientNet as network
         net = network(opt).to(device)
 
     elif opt.network_name == 'capsnet':
@@ -63,7 +67,7 @@ def setup_network(opt, device):
     if not opt.continue_train:
         net.init_weights()
     else:
-        net = net.load_networks(net=net, net_type=opt.weight_name, weight_path=opt.save_path + '/pre_tested', device=device)
+        net = net.load_networks(net=net, loss_type=opt.loss_name, weight_path=opt.save_path + '/', device=device)
     return net
 
 def calc_loss(net, input_label):
@@ -138,8 +142,10 @@ if __name__ == '__main__':
             net.set_input(input_image)
 
             net.forward()
-
-            fn_loss = calc_loss(net, input_label)
+            if config.opt.network_name == 'capsnet':
+                fn_loss = net.get_loss(input_label)
+            else:
+                fn_loss = calc_loss(net, input_label)
 
             optimizer.zero_grad()
             fn_loss.backward()
@@ -150,6 +156,7 @@ if __name__ == '__main__':
             TP, FP, FN = calc_precision_recall_1(predict.cpu(), input_label.cpu(), TP, FP, FN)
 
             temp_loss.append(fn_loss.cpu().detach().numpy().item())
+
 
             if global_step % config.opt.freq_show_loss == 0:
                 loss_dict = dict()
@@ -163,17 +170,11 @@ if __name__ == '__main__':
                 precision, recall = precision_recall(TP, FP, FN)
                 wb_logger.log_precision_recall(recall, precision, config.opt.network_name)
 
-                TP = np.zeros([9, 1])
-                FP = np.zeros([9, 1])
-                FN = np.zeros([9, 1])
 
             if global_step % config.opt.freq_save_net == 0:
                 torch.save({'net': net.state_dict()},
-                           config.opt.save_path + '/{}_epoch'.format(config.opt.network_name) + ".pth")
+                           config.opt.save_path + '/{}_{}'.format(config.opt.network_name, config.opt.loss_name) + ".pth")
 
-        if curr_epoch % 20 == 0:
-            np.savez('./p_r_data/p_r_data_{}_{}_{}_{}.npz'.format(config.opt.network_name, config.opt.loss_name, config.opt.threshold, curr_epoch+1), x=temp_precision, y=temp_recall)
-            print('p_r_data_{}_{}_{}_{}.npz'.format(config.opt.network_name, config.opt.loss_name, config.opt.threshold, curr_epoch+1))
 
         print('Elapsed time for one epoch: %.2f [s]' % (time.time() - epoch_start_time))
         print('------- epoch {} ends -------'.format(curr_epoch + 1))

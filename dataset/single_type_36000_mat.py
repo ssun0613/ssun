@@ -19,9 +19,14 @@ class single_mat():
         data_load = sorted(glob.glob(self.dataset_dir + '*.mat'))
         return data_load
 
+
     def __len__(self):
         return self.dataset_size
 
+    # train_multi_98, train_multi_96, train_multi_90, train_multi_88, train_multi_82, train_multi_80, train_multi_74, train_multi_72, train_multi_66, train_multi_42,
+    # train_multi_40, train_multi_34, train_multi_26, train_multi_24, train_multi_18, train_multi_170, train_multi_168, train_multi_162, train_multi_160, train_multi_154
+    # train_multi_144, train_multi_138, train_multi_136, train_multi_130, train_multi_10, train_multi_106, train_multi_104, train_multi_152, train_multi_146
+    # train_center, train_donut, train_loc, train_edgering, train_edgeloc, train_nearfull, train_random, train_scratch, train_none
     def __getitem__(self, index):
         data_one = io.loadmat(self.data_load[index % self.dataset_size])
         image_one = data_one['data_wdm']['waferDefectMap'][0][0]
@@ -55,6 +60,9 @@ if __name__ == '__main__': # class 내부에서 바로 디버깅을 할수있음
     import numpy as np
 
     config = Config()
-    object = single_mat(dataset_path=config.opt.dataset_path, is_training=True,
-                        data_size=(config.opt.data_height, config.opt.data_width))
+    dataset_object_train = single_mat(dataset_path=config.opt.dataset_path_train, is_training=True,
+                                        data_size=(config.opt.data_height, config.opt.data_width))
+
+
+    out = dataset_object_train.__getitem__(28651)
 

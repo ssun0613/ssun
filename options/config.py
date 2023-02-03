@@ -37,8 +37,9 @@ def dataset_info(dataset_name):
         dataset_info['data_depth'] = 3
         dataset_info['batch_size'] = 40
 
-        dataset_info['in_dim'] = 8
-        dataset_info['out_dim'] = 16
+        dataset_info['in_dim'] = 16
+        dataset_info['out_dim'] = 24
+        dataset_info['out_channels'] = 1024
         dataset_info['num_routing'] = 3
         dataset_info['threshold'] = 0.5
 
@@ -58,7 +59,7 @@ class Config:
         self.parser.add_argument('--weight_name', type=str, default='resnet') # [ resnet | densenet | efficientnet | capsnet ]
         self.parser.add_argument('--dataset_name', type=str, default='multi')
         self.parser.add_argument('--continue_train', type=bool, default=False)
-        self.parser.add_argument('--epochs', type=int, default=100)
+        self.parser.add_argument('--epochs', type=int, default=20)
         #
         temp_parser, _ = self.parser.parse_known_args()
         self.dataset_info = dataset_info(dataset_name=temp_parser.dataset_name)
@@ -74,6 +75,7 @@ class Config:
 
         self.parser.add_argument('--in_dim', type=int, default=self.dataset_info['in_dim'])
         self.parser.add_argument('--out_dim', type=int, default=self.dataset_info['out_dim'])
+        self.parser.add_argument('--out_channels', type=int, default=self.dataset_info['out_channels'])
         self.parser.add_argument('--num_routing', type=int, default=self.dataset_info['num_routing'])
         self.parser.add_argument('--threshold', type=float, default=self.dataset_info['threshold'])
         #####

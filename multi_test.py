@@ -15,8 +15,7 @@ import time
 from torch.optim import lr_scheduler
 
 from options.config import Config
-from options.precision_recall import calc_precision_recall_1, precision_recall
-from options.draw_chart import draw_p_r_curve
+from options.precision_recall import *
 from utils.wandb_utils import WBLogger
 
 def setup_scheduler(opt, optimizer):
@@ -45,6 +44,10 @@ def setup_network(opt, device):
     if opt.network_name == None:
         ValueError('Please set model_name!')
 
+    elif opt.network_name == 'lenet':
+        from model.lenet import LeNet as network
+        net = network(opt).to(device)
+
     elif opt.network_name == 'resnet':
         from model.Resnet import Resnet as network
         net = network(opt).to(device)
@@ -54,7 +57,7 @@ def setup_network(opt, device):
         net = network(opt).to(device)
 
     elif opt.network_name == 'efficientnet':
-        from model.efficientnet import efficientnet_b0 as network
+        from model.efficientnet import EfficientNet as network
         net = network(opt).to(device)
 
     elif opt.network_name == 'capsnet':
@@ -64,7 +67,7 @@ def setup_network(opt, device):
     if not opt.continue_train:
         net.init_weights()
     else:
-        net = net.load_networks(net=net, net_type=opt.weight_name, weight_path=opt.save_path + '/pre_tested', device=device)
+        net = net.load_networks(net=net, loss_type=opt.loss_name, weight_path=opt.save_path + '/', device=device)
     return net
 
 def calc_loss(net, input_label):
@@ -107,85 +110,45 @@ if __name__ == '__main__':
     config = Config()
     config.print_options()
     device = setup_device(config.opt)
-    # wb_logger = WBLogger(config.opt)
 
     train_loader, test_loader = setup_dataset(config.opt)
 
     net = setup_network(config.opt, device)
-    optimizer = setup_optimizer(config.opt, net)
-    scheduler = setup_scheduler(config.opt, optimizer)
 
-    global_step = 0
+    test_index = 0
+    t_p = []
+    t_r = []
 
-    temp_loss = []
-    temp_precision = []
-    temp_recall = []
-
-    TP = np.zeros([9, 1])
-    FP = np.zeros([9, 1])
-    FN = np.zeros([9, 1])
-
-    test_iter = iter(test_loader)
-
-    for curr_epoch in range(config.opt.epochs):
-        epoch_start_time = time.time()
-        print('------- epoch {} starts -------'.format(curr_epoch + 1))
-        for batch_id, data in enumerate(train_loader, 1):
-            global_step += 1
-
-            input_image = data['image'].type('torch.FloatTensor').to(device)
-            input_label = data['label'].type('torch.FloatTensor').to(device)
-
-            net.set_input(input_image)
-
-            net.forward()
-
-            fn_loss = calc_loss(net, input_label)
-
-            optimizer.zero_grad()
-            fn_loss.backward()
-            optimizer.step()
-
-            predict = net.predict()
-
-            TP, FP, FN = calc_precision_recall_1(predict.cpu(), input_label.cpu(), TP, FP, FN)
-
-            temp_loss.append(fn_loss.cpu().detach().numpy().item())
-
-            if global_step % 100 == 0:
-                precision, recall = precision_recall(TP, FP, FN)
-                temp_precision.append(precision.reshape(1,-1))
-                temp_recall.append(recall.reshape(1,-1))
-
-            # if global_step % config.opt.freq_show_loss == 0:
-            #     loss_dict = dict()
-            #     loss_dict['epoch'] = curr_epoch
-            #     loss_dict['loss'] = np.mean(temp_loss)
-            #     wb_logger.log(prefix='train', metrics_dict=loss_dict)
-
-                temp_loss = []
-
-            # if global_step % config.opt.freq_show_image == 0:
-            #     draw_p_r_curve(temp_precision, temp_recall)
-            #
-            #     TP = np.zeros([9, 1])
-            #     FP = np.zeros([9, 1])
-            #     FN = np.zeros([9, 1])
-
-            # if global_step % config.opt.freq_save_net == 0:
-            #     torch.save({'net': net.state_dict()},
-            #                config.opt.save_path + '/{}_epoch'.format(config.opt.network_name) + ".pth")
-
-        np.savez('./p_r_data/p_r_data_{}_{}.npz'.format(config.opt.network_name, config.opt.loss_name), x=temp_precision, y=temp_recall)
-        draw_p_r_curve(temp_precision, temp_recall, config)
+    for threshold in range(1, 11):
 
         TP = np.zeros([9, 1])
         FP = np.zeros([9, 1])
         FN = np.zeros([9, 1])
 
-        print('Elapsed time for one epoch: %.2f [s]' % (time.time() - epoch_start_time))
-        print('------- epoch {} ends -------'.format(curr_epoch + 1))
+        config.opt.threshold = round(threshold * 0.1, 1)
+        print(config.opt.threshold)
 
-        print('Update Learning Rate...')
-        scheduler.step()
-        print('[Network] learning rate = %.7f' % optimizer.param_groups[0]['lr'])
+        for test_index in range(config.opt.num_test_iter):
+            with torch.no_grad():
+                try:
+                    data = test_iter._next_data()
+                except:
+                    test_iter = iter(test_loader)
+                    data = test_iter._next_data()
+
+                input_image = data['image'].type('torch.FloatTensor').to(device)
+                input_label = data['label'].type('torch.FloatTensor').to(device)
+
+                net.set_input(input_image)
+                net.forward()
+                predict = net.predict()
+
+                TP, FP, FN = calc_precision_recall_1(predict.cpu(), input_label.cpu(), TP, FP, FN)
+                precision, recall = precision_recall(TP, FP, FN)
+
+        t_p.append(precision.reshape(1,-1))
+        t_r.append(recall.reshape(1,-1))
+
+    np.savez('./p_r_data/p_r_data_{}/p_r_data_{}_{}_{}_{}.npz'.format(config.opt.network_name, config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels), x=t_p, y=t_r)
+    print('p_r_data_{}_{}_{}_{}.npz'.format(config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels))
+

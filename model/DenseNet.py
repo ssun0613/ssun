@@ -82,7 +82,8 @@ class DenseNet(nn.Module):
 
     def predict(self):
         y = torch.sigmoid(self.output)
-        y[y > self.threshold] = 1
+        y[y >= self.threshold] = 1
+        y[y < self.threshold] = 0
         return y
 
     def init_weights(self):
@@ -99,8 +100,8 @@ class DenseNet(nn.Module):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
 
-    def load_networks(self, net, net_type, device, weight_path=None):
-        load_filename = 'Densenet_epoch_{}.pth'.format(net_type)
+    def load_networks(self, net, loss_type, device, weight_path=None):
+        load_filename = 'densenet_{}.pth'.format(loss_type, )
         if weight_path is None:
             ValueError('Should set the weight_path, which is the path to the folder including weights')
         else:
