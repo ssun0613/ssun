@@ -14,7 +14,7 @@ if __name__ =='__main__':
 
     classes = ["Center", "Donut", "Edge_Loc", "Edge_Ring", "Local", "Near_full", "Random", "Scratch", "Normal" ]
     network = "capsnet"  # ['resnet', 'densenet', 'efficientnet', 'capsnet']
-    in_dim = 16 # [8, 16]
+    in_dim = 8 # [8, 16]
     out_channels = 256 # [256, 512, 1024]
 
     # loss_mse = np.load('../p_r_data/p_r_data_{}/p_r_data_{}_mse.npz'.format(network, network))
@@ -55,7 +55,7 @@ if __name__ =='__main__':
         if not network == 'capsnet':
             plt.plot(r_c, p_c, 'go', label='Cross Entropy')
         elif network == 'capsnet':
-            plt.plot(r_c, p_c, 'go-', label='MSE')
+            plt.plot(r_c, p_c, 'go', label='MSE')
 
         for k in range(p_cross.shape[0]):
             # plt.text(r_m[k], p_m[k], 'threshold({})'.format(threshold[k]))

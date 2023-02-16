@@ -55,10 +55,10 @@ class Config:
     def __init__(self):
         self.parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-        self.parser.add_argument('--network_name', type=str, default='resnet') # [ resnet | densenet | efficientnet | capsnet ]
-        self.parser.add_argument('--weight_name', type=str, default='resnet') # [ resnet | densenet | efficientnet | capsnet ]
+        self.parser.add_argument('--network_name', type=str, default='capsnet') # [ resnet | densenet | efficientnet | capsnet ]
+        self.parser.add_argument('--weight_name', type=str, default='capsnet') # [ resnet | densenet | efficientnet | capsnet ]
         self.parser.add_argument('--dataset_name', type=str, default='multi')
-        self.parser.add_argument('--continue_train', type=bool, default=False)
+        self.parser.add_argument('--continue_train', type=bool, default=True)
         self.parser.add_argument('--epochs', type=int, default=20)
         #
         temp_parser, _ = self.parser.parse_known_args()

@@ -119,14 +119,13 @@ if __name__ == '__main__':
     t_p = []
     t_r = []
 
-    for threshold in range(1, 11):
+    for threshold in range(1, 101):
 
         TP = np.zeros([9, 1])
         FP = np.zeros([9, 1])
         FN = np.zeros([9, 1])
 
-        config.opt.threshold = round(threshold * 0.1, 1)
-        print(config.opt.threshold)
+        config.opt.threshold = round(threshold * 0.001, 5)
 
         for test_index in range(config.opt.num_test_iter):
             with torch.no_grad():
@@ -148,7 +147,8 @@ if __name__ == '__main__':
 
         t_p.append(precision.reshape(1,-1))
         t_r.append(recall.reshape(1,-1))
-
-    np.savez('./p_r_data/p_r_data_{}/p_r_data_{}_{}_{}_{}.npz'.format(config.opt.network_name, config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels), x=t_p, y=t_r)
-    print('p_r_data_{}_{}_{}_{}.npz'.format(config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels))
+    # np.save('./p_r_data/p_r_data_{}/p_r_data_t_p_{}_{}_{}_{}'.format(config.opt.network_name, config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels), t_p)
+    # np.save('./p_r_data/p_r_data_{}/p_r_data_t_r_{}_{}_{}_{}'.format(config.opt.network_name, config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels), t_r)
+    np.savez('./p_r_data/p_r_data_{}/p_r_data_{}_{}_{}_{}_1.npz'.format(config.opt.network_name, config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels), x=t_p, y=t_r)
+    print('finish')
 
