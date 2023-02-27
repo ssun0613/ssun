@@ -10,7 +10,6 @@ import wandb
 if __name__ =='__main__':
 
     classes = ["Center", "Donut", "Edge_Loc", "Edge_Ring", "Local", "Near_full", "Random", "Scratch", "Normal"]
-    network = "capsnet"  # ['resnet', 'densenet', 'efficientnet', 'capsnet']
     in_dim = [8, 16]
     out_channels = [256, 512, 1024]
 
@@ -160,7 +159,7 @@ if __name__ =='__main__':
         plt.grid(True)
         plt.xlabel("recall")
         plt.ylabel("precision")
-
         plt.legend()
-        plt.show()
-        plt.close()
+
+        plt.savefig('../p_r_data/p_r_curve/p-r_curve_{}.png'.format(classes[i]))
+        plt.clf()

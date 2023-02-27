@@ -52,6 +52,10 @@ def setup_network(opt, device):
         from model.Resnet import Resnet as network
         net = network(opt).to(device)
 
+    elif opt.network_name == 'resnet_2':
+        from model.Resnet_2 import Resnet as network
+        net = network(opt).to(device)
+
     elif opt.network_name == 'densenet':
         from model.DenseNet import DenseNet as network
         net = network(opt).to(device)

@@ -7,16 +7,10 @@ os.environ["WANDB_RUN_DIR"] = '/storage/mskim/wandb/'
 
 import sys
 sys.path.append("..")
-import numpy as np
-import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import time
 from torch.optim import lr_scheduler
-
 from options.config import Config
 from options.precision_recall import *
-from utils.wandb_utils import WBLogger
 
 def setup_scheduler(opt, optimizer):
     if opt.scheduler_name == 'steplr':
@@ -74,7 +68,6 @@ def calc_loss(net, input_label):
     if config.opt.loss_name == 'mse':
         fn_loss = nn.MSELoss()
         loss = fn_loss(net.get_output(), input_label)
-
     elif config.opt.loss_name == 'cross':
         fn_loss = nn.CrossEntropyLoss()
         loss = fn_loss(net.get_output(), input_label)
@@ -107,6 +100,7 @@ def setup_device(opt):
     return device
 
 if __name__ == '__main__':
+
     config = Config()
     config.print_options()
     device = setup_device(config.opt)
@@ -147,8 +141,8 @@ if __name__ == '__main__':
 
         t_p.append(precision.reshape(1,-1))
         t_r.append(recall.reshape(1,-1))
-    # np.save('./p_r_data/p_r_data_{}/p_r_data_t_p_{}_{}_{}_{}'.format(config.opt.network_name, config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels), t_p)
-    # np.save('./p_r_data/p_r_data_{}/p_r_data_t_r_{}_{}_{}_{}'.format(config.opt.network_name, config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels), t_r)
-    np.savez('./p_r_data/p_r_data_{}/p_r_data_{}_{}_{}_{}_1.npz'.format(config.opt.network_name, config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels), x=t_p, y=t_r)
+    np.save('./p_r_data/p_r_data_{}/p_r_data_t_p_{}_{}_{}_{}'.format(config.opt.network_name, config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels), t_p)
+    np.save('./p_r_data/p_r_data_{}/p_r_data_t_r_{}_{}_{}_{}'.format(config.opt.network_name, config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels), t_r)
+    # np.savez('./p_r_data/p_r_data_{}/p_r_data_{}_{}_{}_{}.npz'.format(config.opt.network_name, config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels), x=t_p, y=t_r)
     print('finish')
 
