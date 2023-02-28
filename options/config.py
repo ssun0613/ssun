@@ -55,8 +55,8 @@ class Config:
     def __init__(self):
         self.parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-        self.parser.add_argument('--network_name', type=str, default='capsnet') # [ resnet | densenet | efficientnet | capsnet ]
-        self.parser.add_argument('--weight_name', type=str, default='capsnet') # [ resnet | densenet | efficientnet | capsnet ]
+        self.parser.add_argument('--network_name', type=str, default='densenet') # [ resnet | densenet | efficientnet | capsnet ]
+        self.parser.add_argument('--weight_name', type=str, default='densenet') # [ resnet | densenet | efficientnet | capsnet ]
         self.parser.add_argument('--dataset_name', type=str, default='multi')
         self.parser.add_argument('--continue_train', type=bool, default=False)
         self.parser.add_argument('--epochs', type=int, default=20)
@@ -89,7 +89,7 @@ class Config:
         self.parser.add_argument('--save_path', type=str, default='./checkpoints/pre_test_{}_{}'.format(temp_parser.dataset_name, temp_parser.network_name), help='path to store model')
         self.parser.add_argument('--train_test_save_path', type=str, default='./train_test/' + temp_parser.network_name, help='')
         self.parser.add_argument('--use_cuda', type=bool, default=True, help='use cuda')
-        self.parser.add_argument('--gpu_id', type=str, default='0', help='gpu id used to train')
+        self.parser.add_argument('--gpu_id', type=str, default='1', help='gpu id used to train')
         self.parser.add_argument('--phase', type=str, default='train')
         self.parser.add_argument('--freq_show_loss', type=int, default=100)
         self.parser.add_argument('--freq_show_image', type=int, default=200)

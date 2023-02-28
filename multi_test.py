@@ -7,6 +7,7 @@ os.environ["WANDB_RUN_DIR"] = '/storage/mskim/wandb/'
 
 import sys
 sys.path.append("..")
+import timeit
 import torch.nn as nn
 from torch.optim import lr_scheduler
 from options.config import Config
@@ -44,6 +45,10 @@ def setup_network(opt, device):
 
     elif opt.network_name == 'resnet':
         from model.Resnet import Resnet as network
+        net = network(opt).to(device)
+
+    elif opt.network_name == 'resnet_2':
+        from model.Resnet_2 import Resnet as network
         net = network(opt).to(device)
 
     elif opt.network_name == 'densenet':
@@ -113,7 +118,9 @@ if __name__ == '__main__':
     t_p = []
     t_r = []
 
-    for threshold in range(1, 101):
+    mean_time = 0
+
+    for threshold in range(1, 1001):
 
         TP = np.zeros([9, 1])
         FP = np.zeros([9, 1])
@@ -121,28 +128,78 @@ if __name__ == '__main__':
 
         config.opt.threshold = round(threshold * 0.001, 5)
 
-        for test_index in range(config.opt.num_test_iter):
+        elapsed_time = 0
+        for batch_id, data in enumerate(test_loader, 1):
+
             with torch.no_grad():
-                try:
-                    data = test_iter._next_data()
-                except:
-                    test_iter = iter(test_loader)
-                    data = test_iter._next_data()
 
                 input_image = data['image'].type('torch.FloatTensor').to(device)
                 input_label = data['label'].type('torch.FloatTensor').to(device)
 
                 net.set_input(input_image)
-                net.forward()
+
+                start_time = timeit.default_timer()
+
+                if config.opt.network_name == 'capsnet':
+                  net.forward(mode='test')
+                else:
+                  net.forward()
                 predict = net.predict()
+
+                end_time = timeit.default_timer()
+                elapsed_time += end_time - start_time
 
                 TP, FP, FN = calc_precision_recall_1(predict.cpu(), input_label.cpu(), TP, FP, FN)
                 precision, recall = precision_recall(TP, FP, FN)
 
+        mean_time += elapsed_time
         t_p.append(precision.reshape(1,-1))
         t_r.append(recall.reshape(1,-1))
-    np.save('./p_r_data/p_r_data_{}/p_r_data_t_p_{}_{}_{}_{}'.format(config.opt.network_name, config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels), t_p)
-    np.save('./p_r_data/p_r_data_{}/p_r_data_t_r_{}_{}_{}_{}'.format(config.opt.network_name, config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels), t_r)
-    # np.savez('./p_r_data/p_r_data_{}/p_r_data_{}_{}_{}_{}.npz'.format(config.opt.network_name, config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels), x=t_p, y=t_r)
+    # np.save('./p_r_data/p_r_data_{}/p_r_data_t_p_{}_{}_{}_{}'.format(config.opt.network_name, config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels), t_p)
+    # np.save('./p_r_data/p_r_data_{}/p_r_data_t_r_{}_{}_{}_{}'.format(config.opt.network_name, config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels), t_r)
+    np.savez('./p_r_data/p_r_data_{}/p_r_data_{}_{}_{}_{}_1000.npz'.format(config.opt.network_name, config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels), x=t_p, y=t_r)
+
+    print("%f [sec]" % (mean_time // 1000))
     print('finish')
+
+    # TP = np.zeros([9, 1])
+    # FP = np.zeros([9, 1])
+    # FN = np.zeros([9, 1])
+    #
+    # config.opt.threshold = 0.5
+    # cnt = 0
+    # elapsed_time = 0
+    # for batch_id, data in enumerate(test_loader, 1):
+    #     cnt += 1
+    #     if cnt > 4000:
+    #         break
+    #     with torch.no_grad():
+    #
+    #         input_image = data['image'].type('torch.FloatTensor').to(device)
+    #         input_label = data['label'].type('torch.FloatTensor').to(device)
+    #
+    #         net.set_input(input_image)
+    #         #
+    #         start_time = timeit.default_timer()
+    #
+    #         if config.opt.network_name == 'capsnet':
+    #             net.forward(mode='test')
+    #         else:
+    #             net.forward()
+    #         predict = net.predict()
+    #
+    #         end_time = timeit.default_timer()
+    #         elapsed_time += end_time - start_time
+    #
+    #         TP, FP, FN = calc_precision_recall_1(predict.cpu(), input_label.cpu(), TP, FP, FN)
+    #         precision, recall = precision_recall(TP, FP, FN)
+    #
+    # print("%f [sec]" % elapsed_time)
+    #
+    # t_p.append(precision.reshape(1,-1))
+    # t_r.append(recall.reshape(1,-1))
+    # # np.save('./p_r_data/p_r_data_{}/p_r_data_t_p_{}_{}_{}_{}'.format(config.opt.network_name, config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels), t_p)
+    # # np.save('./p_r_data/p_r_data_{}/p_r_data_t_r_{}_{}_{}_{}'.format(config.opt.network_name, config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels), t_r)
+    # np.savez('./p_r_data/p_r_data_{}/p_r_data_{}_{}_{}_{}_2.npz'.format(config.opt.network_name, config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels), x=t_p, y=t_r)
+    # print('finish')
 

@@ -99,7 +99,7 @@ class Resnet(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
     def load_networks(self, net, loss_type, device, weight_path=None):
-        load_filename = 'resnet_{}.pth'.format(loss_type)
+        load_filename = 'resnet_2_{}.pth'.format(loss_type)
         if weight_path is None:
             ValueError('Should set the weight_path, which is the path to the folder including weights')
         else:

@@ -145,9 +145,10 @@ class capsnet(nn.Module):
     def set_input(self, x):
         self.input = x
 
-    def forward(self):
+    def forward(self, mode='train'):
         self.output = self.digit_capsules(self.primary_layer(self.conv_layer(self.input)))
-        self.reconstructions, masked = self.decoder(self.output)
+        if mode == 'train':
+            self.reconstructions, masked = self.decoder(self.output)
 
     def predict(self):
         y = torch.norm(self.output, dim=2)

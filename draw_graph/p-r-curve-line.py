@@ -13,10 +13,12 @@ if __name__ =='__main__':
     in_dim = [8, 16]
     out_channels = [256, 512, 1024]
 
-    data_1 = np.load('../p_r_data/p_r_data_resnet/p_r_data_resnet_cross_16_1024_1.npz')
-    data_2 = np.load('../p_r_data/p_r_data_densenet/p_r_data_densenet_cross_16_1024_1.npz')
-    data_3 = np.load('../p_r_data/p_r_data_efficientnet/p_r_data_efficientnet_cross_16_1024_1.npz')
-    data_4 = np.load('../p_r_data/p_r_data_capsnet/p_r_data_capsnet_mse_{}_{}_1.npz'.format(in_dim[1], out_channels[2]))
+    # data_1 = np.load('../p_r_data/p_r_data_resnet/p_r_data_resnet_cross_16_1024.npz')
+    data_1 = np.load('../p_r_data/p_r_data_resnet_2/p_r_data_resnet_2_cross_16_1024.npz')
+    data_2 = np.load('../p_r_data/p_r_data_densenet/p_r_data_densenet_cross_16_1024.npz')
+    data_3 = np.load('../p_r_data/p_r_data_efficientnet/p_r_data_efficientnet_cross_16_1024.npz')
+    data_4 = np.load('../p_r_data/p_r_data_capsnet/p_r_data_capsnet_mse_{}_{}.npz'.format(in_dim[0], out_channels[0]))
+
 
     p_r = data_1['x']
     r_r = data_1['y']
@@ -60,22 +62,25 @@ if __name__ =='__main__':
             tr_c = r_c[j][0][i]
             flag_save_c = True
 
-            for k in range(p_c.shape[0]):
+            for k in range(p_r.shape[0]):
                 if tp_r < p_r[k][0][i]:
                     if tr_r < r_r[k][0][i]:
                         flag_save_r = False
                         continue
 
+            for k in range(p_d.shape[0]):
                 if tp_d < p_d[k][0][i]:
                     if tr_d < r_d[k][0][i]:
                         flag_save_d = False
                         continue
 
+            for k in range(p_e.shape[0]):
                 if tp_e < p_e[k][0][i]:
                     if tr_e < r_e[k][0][i]:
                         flag_save_e = False
                         continue
 
+            for k in range(p_c.shape[0]):
                 if tp_c < p_c[k][0][i]:
                     if tr_c < r_c[k][0][i]:
                         flag_save_c = False
@@ -151,15 +156,17 @@ if __name__ =='__main__':
         plt.title("P-R curve (Defect : {})".format(classes[i]))
         plt.axis([0.93, 1.01, 0.6, 1.01])
 
-        plt.plot(r_n_r, r_n_p, label='Resnet')
+        # plt.plot(r_n_r, r_n_p, label='Resnet_34')
+        plt.plot(r_n_r, r_n_p, label='Resnet_50')
         plt.plot(d_n_r, d_n_p, label='Densenet')
         plt.plot(e_n_r, e_n_p, label='Efficientnet')
         plt.plot(c_n_r, c_n_p, label='Capsnet')
+
 
         plt.grid(True)
         plt.xlabel("recall")
         plt.ylabel("precision")
         plt.legend()
 
-        plt.savefig('../p_r_data/p_r_curve/p-r_curve_{}.png'.format(classes[i]))
+        plt.savefig('../p_r_data/p_r_curve/p-r_curve_{}_resnet_50.png'.format(classes[i]))
         plt.clf()
