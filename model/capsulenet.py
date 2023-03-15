@@ -38,16 +38,16 @@ class Primarycaps(nn.Module):
 
         self.capsules = nn.ModuleList([nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=3, stride=1, padding=1) for _ in range(self.num_primary_caps)])
 
-    def forward(self, x): # x.shape([1, 1024, 13, 13])
-        out = [capsule(x) for capsule in self.capsules] # len(out) = self.num_primary_caps
-        out = torch.stack(out, dim=2) # out.shape([1, self.out_channels , self.num_primary_caps, 10, 10])
-        num_routes = out.shape[2]*out.shape[3]*out.shape[4] # 64*13*13
-        out = out.view(x.size(0), num_routes, -1) # out.shape([1, 64*13*13, 16])
+    def forward(self, x):
+        out = [capsule(x) for capsule in self.capsules]
+        out = torch.stack(out, dim=2)
+        num_routes = out.shape[2]*out.shape[3]*out.shape[4]
+        out = out.view(x.size(0), num_routes, -1)
         return self.squash(out)
 
     def squash(self, input_tensor):
-        squared_norm = (input_tensor ** 2).sum(-1, keepdim=True) # squared_norm.shape([1, 3200, 1])
-        output_tensor = squared_norm * input_tensor / ((1.+squared_norm) * torch.sqrt(squared_norm)) # output_tensor.shape([1, 3200, 8])
+        squared_norm = (input_tensor ** 2).sum(-1, keepdim=True)
+        output_tensor = squared_norm * input_tensor / ((1.+squared_norm) * torch.sqrt(squared_norm))
         return output_tensor
 
 class Digitcaps(nn.Module):
@@ -62,7 +62,7 @@ class Digitcaps(nn.Module):
 
         self.W = nn.Parameter(0.01 * torch.randn(in_caps, out_caps, in_dim, out_dim)) # 0.01!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    def forward(self, x): # x.shape([1, 3200, 8])
+    def forward(self, x):
         batch_size = x.size(0) # batch_size=1
         # x: (batch_size, in_caps, in_dim) - bin
         # W: (in_caps, out_caps, in_dim, out_dim) - ijnm
@@ -208,7 +208,7 @@ class capsnet(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
     def load_networks(self, net, loss_type , device, weight_path=None):
-        load_filename = 'capsnet_{}_{}_{}.pth'.format(loss_type, Config().opt.in_dim, Config().opt.out_channels)
+        load_filename = 'capsnet_{}_{}_{}_1.pth'.format(loss_type, Config().opt.in_dim, Config().opt.out_channels)
         if weight_path is None:
             ValueError('Should set the weight_path, which is the path to the folder including weights')
         else:

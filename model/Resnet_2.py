@@ -108,8 +108,6 @@ class Resnet(nn.Module):
         if isinstance(net, torch.nn.DataParallel):
             net = net.module
         print('loading the model from %s' % load_path)
-        # if you are using PyTorch newer than 0.4 (e.g., built from
-        # GitHub source), you can remove str() on self.device
         state_dict = torch.load(load_path, map_location=str(device))
         if hasattr(state_dict, '_metadata'):
             del state_dict._metadata

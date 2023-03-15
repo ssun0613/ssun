@@ -113,11 +113,7 @@ class SepConv(nn.Module):
 class EfficientNet(nn.Module):
     def __init__(self, opt):
         super().__init__()
-        channels = [32, 16, 24, 40, 80, 112, 192, 320, 1280]
         repeats = [1, 2, 2, 3, 3, 4, 1]
-        strides = [1, 2, 2, 2, 1, 2, 1]
-        kernel_size = [3, 3, 5, 3, 5, 5, 3]
-        se_scale = 4
         stochastic_depth = False
         p = 0.5
 
@@ -129,23 +125,21 @@ class EfficientNet(nn.Module):
             self.step = 0
 
         self.threshold = opt.threshold
-        self.CNN = nn.Sequential(
-                                    nn.Conv2d(3, channels[0], 3, stride=2, padding=1, bias=False),
-                                    nn.BatchNorm2d(channels[0]),
-                                    self._make_Block(SepConv, repeats[0], channels[0], channels[1], kernel_size[0], strides[0], se_scale),
-                                    self._make_Block(MBConv, repeats[1], channels[1], channels[2], kernel_size[1], strides[1], se_scale),
-                                    self._make_Block(MBConv, repeats[2], channels[2], channels[3], kernel_size[2], strides[2], se_scale),
-                                    self._make_Block(MBConv, repeats[3], channels[3], channels[4], kernel_size[3], strides[3], se_scale),
-                                    self._make_Block(MBConv, repeats[4], channels[4], channels[5], kernel_size[4], strides[4], se_scale),
-                                    self._make_Block(MBConv, repeats[5], channels[5], channels[6], kernel_size[5], strides[5], se_scale),
-                                    self._make_Block(MBConv, repeats[6], channels[6], channels[7], kernel_size[6], strides[6], se_scale),
-                                    nn.Conv2d(channels[7], channels[8], 1, stride=1, bias=False),
-                                    nn.BatchNorm2d(channels[8], momentum=0.99, eps=1e-3),
-                                    )
-
+        self.CNN = nn.Sequential(nn.Conv2d(in_channels=3, out_channels=32, kernel_size=3, stride=2, padding=1, bias=False),
+                                 nn.BatchNorm2d(32),
+                                 self._make_Block(SepConv, repeats=1, in_channels=32, out_channels=16, kernel_size=3, stride=1, se_scale=4),
+                                 self._make_Block(MBConv, repeats=2, in_channels=16, out_channels=24, kernel_size=3, stride=2, se_scale=4),
+                                 self._make_Block(MBConv, repeats=2, in_channels=24, out_channels=40, kernel_size=5, stride=2, se_scale=4),
+                                 self._make_Block(MBConv, repeats=3, in_channels=40, out_channels=80, kernel_size=3, stride=2, se_scale=4),
+                                 self._make_Block(MBConv, repeats=2, in_channels=80, out_channels=112, kernel_size=5, stride=1, se_scale=4),
+                                 self._make_Block(MBConv, repeats=2, in_channels=112, out_channels=192, kernel_size=5, stride=2, se_scale=4),
+                                 self._make_Block(MBConv, repeats=2, in_channels=193, out_channels=320, kernel_size=3, stride=1, se_scale=4),
+                                 nn.Conv2d(in_channels=320, out_channels=1280, kernel_size=1, stride=1, bias=False),
+                                 nn.BatchNorm2d(1280, momentum=0.99, eps=1e-3),
+                                 )
         self.GAP = nn.AdaptiveAvgPool2d(1)
         self.flatten = nn.Flatten()
-        self.classification = nn.Linear(channels[8], 8)
+        self.classification = nn.Linear(1280, 8)
 
     def set_input(self, x):
         self.input = x

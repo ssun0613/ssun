@@ -37,9 +37,9 @@ def dataset_info(dataset_name):
         dataset_info['data_depth'] = 3
         dataset_info['batch_size'] = 40
 
-        dataset_info['in_dim'] = 16
-        dataset_info['out_dim'] = 24
-        dataset_info['out_channels'] = 1024
+        dataset_info['in_dim'] = 8
+        dataset_info['out_dim'] = 16
+        dataset_info['out_channels'] = 256
         dataset_info['num_routing'] = 3
         dataset_info['threshold'] = 0.5
 

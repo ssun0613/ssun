@@ -120,13 +120,13 @@ if __name__ == '__main__':
 
     mean_time = 0
 
-    for threshold in range(1, 1001):
+    for threshold in range(1, 101):
 
         TP = np.zeros([9, 1])
         FP = np.zeros([9, 1])
         FN = np.zeros([9, 1])
 
-        config.opt.threshold = round(threshold * 0.001, 5)
+        config.opt.threshold = round(threshold * 0.01, 5)
 
         elapsed_time = 0
         for batch_id, data in enumerate(test_loader, 1):
@@ -155,11 +155,11 @@ if __name__ == '__main__':
         mean_time += elapsed_time
         t_p.append(precision.reshape(1,-1))
         t_r.append(recall.reshape(1,-1))
-    # np.save('./p_r_data/p_r_data_{}/p_r_data_t_p_{}_{}_{}_{}'.format(config.opt.network_name, config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels), t_p)
-    # np.save('./p_r_data/p_r_data_{}/p_r_data_t_r_{}_{}_{}_{}'.format(config.opt.network_name, config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels), t_r)
-    np.savez('./p_r_data/p_r_data_{}/p_r_data_{}_{}_{}_{}_1000.npz'.format(config.opt.network_name, config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels), x=t_p, y=t_r)
+    np.save('./p_r_data/p_r_data_{}/p_r_data_t_p_{}_{}_{}_{}_101'.formatmat(config.opt.network_name, config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels), t_p)
+    np.save('./p_r_data/p_r_data_{}/p_r_data_t_r_{}_{}_{}_{}_101'.format(config.opt.network_name, config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels), t_r)
+    # np.savez('./p_r_data/p_r_data_{}/p_r_data_{}_{}_{}_{}_1000.npz'.format(config.opt.network_name, config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels), x=t_p, y=t_r)
 
-    print("%f [sec]" % (mean_time // 1000))
+    print("%f [sec]" % (mean_time))
     print('finish')
 
     # TP = np.zeros([9, 1])
