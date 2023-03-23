@@ -126,15 +126,12 @@ class capsnet(nn.Module):
         super(capsnet, self).__init__()
         self.img_shape = (opt.data_depth, opt.data_width, opt.data_height)
         self.threshold = opt.threshold
+        self.loss_name = nn.MSELoss()
+
         self.conv_layer = Conv(in_channels=opt.data_depth, out_channels=opt.out_channels)
         self.primary_layer = Primarycaps(in_channels=opt.out_channels, out_channels=opt.in_dim)
         self.digit_capsules = Digitcaps(in_dim=opt.in_dim, in_caps=self.calc_in_caps(), out_dim=opt.out_dim, out_caps=8, num_routing=opt.num_routing)
         self.decoder = Decoder(input_width=opt.data_height, input_height=opt.data_width, input_channel=opt.data_depth, out_caps=opt.out_dim, num_classes=8)
-
-        if opt.loss_name == 'mse':
-            self.loss_name = nn.MSELoss()
-        elif opt.loss_name == 'cross':
-            self.loss_name = nn.CrossEntropyLoss()
 
     def calc_in_caps(self):
         temp_input = torch.zeros(1, self.img_shape[0], self.img_shape[1], self.img_shape[2])

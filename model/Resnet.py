@@ -117,7 +117,8 @@ class Resnet(nn.Module):
 
 if __name__ == '__main__':
     print('Debug StackedAE')
-    model = Resnet()
+    config = Config()
+    model = Resnet(config.opt)
     model.init_weights()
     x = torch.rand(1, 3, 52, 52)
     model.set_input(x)
