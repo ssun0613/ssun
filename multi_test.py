@@ -155,8 +155,8 @@ if __name__ == '__main__':
         mean_time += elapsed_time
         t_p.append(precision.reshape(1,-1))
         t_r.append(recall.reshape(1,-1))
-    np.save('./p_r_data/p_r_data_{}/p_r_data_t_p_{}_{}_{}_{}_101'.format(config.opt.network_name, config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels), t_p)
-    np.save('./p_r_data/p_r_data_{}/p_r_data_t_r_{}_{}_{}_{}_101'.format(config.opt.network_name, config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels), t_r)
+    np.save('./p_r_data/p_r_data_{}/p_r_data_t_p_{}_{}_{}_{}_101_conv'.format(config.opt.network_name, config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels), t_p)
+    np.save('./p_r_data/p_r_data_{}/p_r_data_t_r_{}_{}_{}_{}_101_conv'.format(config.opt.network_name, config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels), t_r)
     # np.savez('./p_r_data/p_r_data_{}/p_r_data_{}_{}_{}_{}_1000.npz'.format(config.opt.network_name, config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels), x=t_p, y=t_r)
 
     print("%f [sec]" % (mean_time))

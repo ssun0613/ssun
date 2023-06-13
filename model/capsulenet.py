@@ -10,16 +10,20 @@ from options.config import Config
 class Conv(nn.Module):
     def __init__(self, in_channels=1, out_channels=256):
         super(Conv, self).__init__()
-        self.cnn = nn.Sequential(nn.Conv2d(in_channels=in_channels, out_channels=32, kernel_size=3, stride=2, padding=1),
-                                 nn.BatchNorm2d(32),
-                                 nn.LeakyReLU(),
-                                 nn.Conv2d(in_channels=32, out_channels=int(out_channels/4), kernel_size=3, stride=1, padding=1),
-                                 nn.BatchNorm2d(int(out_channels/4)),
-                                 nn.LeakyReLU(),
-                                 nn.Conv2d(in_channels=int(out_channels/4), out_channels=int(out_channels/2), kernel_size=3, stride=2, padding=1),
-                                 nn.BatchNorm2d(int(out_channels/2)),
-                                 nn.LeakyReLU(),
-                                 nn.Conv2d(in_channels=int(out_channels/2), out_channels=out_channels, kernel_size=3, stride=1, padding=1),
+        # self.cnn = nn.Sequential(nn.Conv2d(in_channels=in_channels, out_channels=32, kernel_size=3, stride=2, padding=1),
+        #                          nn.BatchNorm2d(32),
+        #                          nn.LeakyReLU(),
+        #                          nn.Conv2d(in_channels=32, out_channels=int(out_channels/4), kernel_size=3, stride=1, padding=1),
+        #                          nn.BatchNorm2d(int(out_channels/4)),
+        #                          nn.LeakyReLU(),
+        #                          nn.Conv2d(in_channels=int(out_channels/4), out_channels=int(out_channels/2), kernel_size=3, stride=2, padding=1),
+        #                          nn.BatchNorm2d(int(out_channels/2)),
+        #                          nn.LeakyReLU(),
+        #                          nn.Conv2d(in_channels=int(out_channels/2), out_channels=out_channels, kernel_size=3, stride=1, padding=1),
+        #                          nn.BatchNorm2d(out_channels),
+        #                          nn.LeakyReLU(),
+        #                          )
+        self.cnn = nn.Sequential(nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=3, stride=1, padding=1),
                                  nn.BatchNorm2d(out_channels),
                                  nn.LeakyReLU(),
                                  )
@@ -205,7 +209,7 @@ class capsnet(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
     def load_networks(self, net, loss_type , device, weight_path=None):
-        load_filename = 'capsnet_{}_{}_{}_1.pth'.format(loss_type, Config().opt.in_dim, Config().opt.out_channels)
+        load_filename = 'capsnet_{}_{}_{}.pth'.format(loss_type, Config().opt.in_dim, Config().opt.out_channels)
         if weight_path is None:
             ValueError('Should set the weight_path, which is the path to the folder including weights')
         else:

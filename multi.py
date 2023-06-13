@@ -177,7 +177,7 @@ if __name__ == '__main__':
 
             if global_step % config.opt.freq_save_net == 0:
                 if config.opt.network_name == 'capsnet':
-                    torch.save({'net': net.state_dict()},config.opt.save_path + '/{}_{}_{}_{}_1'.format(config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels) + ".pth")
+                    torch.save({'net': net.state_dict()},config.opt.save_path + '/{}_{}_{}_{}'.format(config.opt.network_name, config.opt.loss_name, config.opt.in_dim, config.opt.out_channels) + ".pth")
                 else:
                     torch.save({'net': net.state_dict()},config.opt.save_path + '/{}_{}'.format(config.opt.network_name, config.opt.loss_name) + ".pth")
 
